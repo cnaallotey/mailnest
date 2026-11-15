@@ -1,32 +1,42 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, type Directive } from 'vue'
 import { withBase } from 'vitepress'
+import ShaderBg from './ShaderBg.vue'
 
 const repo = 'https://github.com/cnaallotey/mailnest'
 
-// ---- install command copy ----
-const copied = ref(false)
-async function copy() {
-  try {
-    await navigator.clipboard.writeText('npx mailnest')
-    copied.value = true
-    setTimeout(() => (copied.value = false), 1600)
-  } catch {}
+// Scroll reveal: elements start hidden only once JS runs, so the page still reads without it.
+const vReveal: Directive<HTMLElement, number | undefined> = {
+  mounted(el, { value }) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    el.classList.add('rv')
+    if (value) el.style.transitionDelay = `${value}ms`
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add('in'); io.disconnect() }
+    }, { rootMargin: '0px 0px -8% 0px' })
+    io.observe(el)
+  },
 }
 
-// ---- inbox mock ----
+// Install command copy
+const copied = ref(false)
+async function copy() {
+  try { await navigator.clipboard.writeText('npx mailnest'); copied.value = true; setTimeout(() => (copied.value = false), 1600) } catch {}
+}
+
+// Hero inbox mock
 interface Mail { id: number; from: string; subject: string; snippet: string; time: string; unread: boolean; checks: { level: 'error' | 'warn' | 'info'; text: string }[] }
 const incoming: Mail = {
   id: 4, from: 'Acme', subject: 'Verify your email', snippet: 'Your code is 482913. It expires in 10 minutes.', time: 'now', unread: true,
   checks: [
     { level: 'warn', text: '1 image(s) missing alt text.' },
-    { level: 'warn', text: 'Uses flex or grid. Outlook desktop and some clients do not support them, use tables.' },
+    { level: 'warn', text: 'Uses flex or grid. Outlook desktop does not support them, use tables.' },
     { level: 'info', text: 'No viewport meta tag. Mobile rendering may be scaled.' },
   ],
 }
 const mails = ref<Mail[]>([
   { id: 3, from: 'Acme Billing', subject: 'Your receipt #1042', snippet: 'Thanks for your order. Here is your receipt.', time: '2m', unread: false,
-    checks: [{ level: 'error', text: 'Image uses a relative URL. It will not load in a real inbox.' }, { level: 'info', text: 'No unsubscribe link found. Required for marketing mail.' }] },
+    checks: [{ level: 'error', text: 'Image uses a relative URL. It will not load in a real inbox.' }, { level: 'info', text: 'No unsubscribe link found.' }] },
   { id: 2, from: 'Acme', subject: 'Reset your password', snippet: 'Someone asked to reset the password for…', time: '6m', unread: false,
     checks: [{ level: 'warn', text: 'Contains an empty or "#" link.' }] },
   { id: 1, from: 'Acme', subject: 'Welcome aboard, Ama', snippet: 'Thanks for joining. Here is how to get…', time: '9m', unread: false, checks: [] },
@@ -34,156 +44,234 @@ const mails = ref<Mail[]>([
 const selectedId = ref(3)
 const tab = ref<'html' | 'checks'>('html')
 const selected = computed(() => mails.value.find(m => m.id === selectedId.value)!)
-
 function select(id: number) {
   selectedId.value = id
   const m = mails.value.find(x => x.id === id)
   if (m) m.unread = false
 }
 
+// 3D tilt on the hero card, following the pointer
+const tilt = ref({ x: 0, y: 0 })
+function onTilt(e: PointerEvent) {
+  const b = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  tilt.value = { x: ((e.clientY - b.top) / b.height - .5) * -5, y: ((e.clientX - b.left) / b.width - .5) * 7 }
+}
+const resetTilt = () => (tilt.value = { x: 0, y: 0 })
+
 let timer: ReturnType<typeof setTimeout> | undefined
 onMounted(() => {
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  timer = setTimeout(() => {
-    mails.value.unshift(incoming)
-  }, reduce ? 0 : 1800)
+  timer = setTimeout(() => mails.value.unshift(incoming), reduce ? 0 : 1600)
 })
 onBeforeUnmount(() => clearTimeout(timer))
 
-const features = [
-  { title: 'Device preview', body: 'Flip the HTML view between mobile, tablet and desktop widths. Rendered in a sandbox with scripts blocked.' },
-  { title: 'Link checker', body: 'Requests every link in a message and shows the status code, so dead links never reach a customer.' },
-  { title: 'Inline images', body: 'cid: images render in place, and every attachment is one click from download.' },
-  { title: 'REST API and webhooks', body: 'List, search, wait for and delete messages over HTTP. Get a JSON POST for every capture.' },
-  { title: 'Release', body: 'Forward a captured message through a real SMTP server to see it in Gmail or Outlook.' },
-  { title: 'Keep it or bin it', body: 'In memory by default. Add --db mail.db to keep messages across restarts in SQLite.' },
-]
-const stacks = ['Node.js', 'Laravel', 'Rails', 'Django', 'Phoenix', 'Spring', 'Go', '.NET', 'Docker']
+const stacks = ['Node.js', 'Laravel', 'Rails', 'Django', 'Phoenix', 'Spring Boot', 'Go', '.NET', 'Docker', 'Nodemailer', 'Playwright', 'Vitest']
+const marquee = [...stacks, ...stacks]
 </script>
 
 <template>
   <div class="mn">
     <!-- HERO -->
-    <section class="hero wrap">
+    <section class="hero">
       <div class="hero-copy">
-        <a class="eyebrow" :href="repo" target="_blank" rel="noopener">
-          <span class="pill">Open source</span> MIT licensed, free forever →
-        </a>
-        <h1>Every email your app sends, <span class="accent">caught locally.</span></h1>
-        <p class="lede">
+        <p class="eyebrow" v-reveal>Open source email testing</p>
+        <h1 v-reveal="80">Send the email.<br><span class="accent">See it instantly.</span></h1>
+        <p class="lede" v-reveal="160">
           Mailnest is a local SMTP server with a live inbox. Point your app at
-          <code>localhost:1025</code> and see each message the moment it is sent,
-          with checks that flag what breaks in real inboxes.
+          <code>localhost:1025</code> and every message lands in front of you, checked for what
+          breaks in real inboxes.
         </p>
-        <div class="install">
-          <span class="prompt">$</span>
-          <code>npx mailnest</code>
-          <button class="copy" @click="copy" :aria-label="copied ? 'Copied' : 'Copy command'">{{ copied ? 'Copied' : 'Copy' }}</button>
+        <div class="ctas" v-reveal="240">
+          <a class="btn dark" :href="withBase('/guide/getting-started')">Get started <span class="arr">→</span></a>
+          <a class="link" :href="repo" target="_blank" rel="noopener">View on GitHub <span class="arr">→</span></a>
         </div>
-        <div class="ctas">
-          <a class="btn primary" :href="withBase('/guide/getting-started')">Get started</a>
-          <a class="btn" :href="repo" target="_blank" rel="noopener">
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-            View on GitHub
-          </a>
-        </div>
-        <p class="req">Requires Node 22.13 or newer. No account, no config file.</p>
+        <button class="install" v-reveal="320" @click="copy" :aria-label="copied ? 'Copied' : 'Copy npx mailnest'">
+          <span class="prompt">$</span><code>npx mailnest</code>
+          <span class="copy">{{ copied ? 'Copied' : 'Copy' }}</span>
+        </button>
+        <p class="fine" v-reveal="380">MIT licensed. Node 22.13 or newer. No account, no config file.</p>
       </div>
 
-      <!-- Inbox mock -->
-      <div class="mock" role="img" aria-label="The Mailnest inbox showing captured emails and a checks panel">
-        <div class="chrome">
-          <span class="dots"><i /><i /><i /></span>
-          <span class="url">127.0.0.1:1080</span>
-        </div>
-        <div class="app">
-          <aside class="side">
-            <div class="side-head">
-              <b>Mailnest</b>
-              <span class="live"><span class="dot" />live</span>
-            </div>
-            <div class="search">Search mail</div>
-            <TransitionGroup name="slide" tag="ul" class="list">
-              <li v-for="m in mails" :key="m.id" :class="{ active: m.id === selectedId, unread: m.unread }" @click="select(m.id)">
-                <div class="row"><span class="from">{{ m.from }}</span><span class="time">{{ m.time }}</span></div>
-                <div class="subj">{{ m.subject }}</div>
-                <div class="snip">{{ m.snippet }}</div>
-              </li>
-            </TransitionGroup>
-          </aside>
-          <div class="pane">
-            <div class="msg-head">
-              <div class="subject">{{ selected.subject }}</div>
-              <div class="meta"><b>{{ selected.from }}</b> &lt;hello@acme.test&gt; to ama@user.test</div>
-            </div>
-            <div class="tabs">
-              <button :class="{ on: tab === 'html' }" @click="tab = 'html'">HTML</button>
-              <button disabled>Text</button>
-              <button disabled>Source</button>
-              <button :class="{ on: tab === 'checks' }" @click="tab = 'checks'">
-                Checks <span v-if="selected.checks.length" class="count">{{ selected.checks.length }}</span>
-              </button>
-            </div>
-            <div v-if="tab === 'html'" class="preview">
-              <div class="email">
-                <div class="email-logo">acme</div>
-                <div class="email-h">{{ selected.subject }}</div>
-                <div class="email-p">{{ selected.snippet }}</div>
-                <div class="email-btn">Open Acme</div>
-                <div class="email-foot">You are receiving this because you signed up at acme.test</div>
+      <div class="hero-stage" @pointermove="onTilt" @pointerleave="resetTilt">
+        <ShaderBg />
+        <div class="mock" :style="{ transform: `perspective(1400px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }"
+             role="img" aria-label="The Mailnest inbox showing captured emails">
+          <div class="mock-top">
+            <span><b>Mailnest</b><span class="crumb"> / Inbox</span></span>
+            <span class="live"><span class="dot" />Listening on :1025</span>
+          </div>
+          <div class="app">
+            <aside class="side">
+              <div class="search">Search mail</div>
+              <TransitionGroup name="slide" tag="ul" class="list">
+                <li v-for="m in mails" :key="m.id" :class="{ active: m.id === selectedId, unread: m.unread }" @click="select(m.id)">
+                  <div class="row"><span class="from">{{ m.from }}</span><span class="time">{{ m.time }}</span></div>
+                  <div class="subj">{{ m.subject }}</div>
+                  <div class="snip">{{ m.snippet }}</div>
+                </li>
+              </TransitionGroup>
+            </aside>
+            <div class="pane">
+              <div class="msg-head">
+                <div class="subject">{{ selected.subject }}</div>
+                <div class="meta"><b>{{ selected.from }}</b> &lt;hello@acme.test&gt; to ama@user.test</div>
               </div>
+              <div class="tabs">
+                <button :class="{ on: tab === 'html' }" @click="tab = 'html'">HTML</button>
+                <button disabled>Text</button>
+                <button disabled>Source</button>
+                <button :class="{ on: tab === 'checks' }" @click="tab = 'checks'">
+                  Checks <span v-if="selected.checks.length" class="count">{{ selected.checks.length }}</span>
+                </button>
+              </div>
+              <Transition name="fade" mode="out-in">
+                <div v-if="tab === 'html'" :key="'h' + selected.id" class="preview">
+                  <div class="email">
+                    <div class="email-logo">acme</div>
+                    <div class="email-h">{{ selected.subject }}</div>
+                    <div class="email-p">{{ selected.snippet }}</div>
+                    <div class="email-btn">Open Acme</div>
+                  </div>
+                </div>
+                <ul v-else :key="'c' + selected.id" class="checks">
+                  <li v-if="!selected.checks.length" class="ok">No issues found.</li>
+                  <li v-for="c in selected.checks" :key="c.text"><span :class="['lvl', c.level]">{{ c.level }}</span>{{ c.text }}</li>
+                </ul>
+              </Transition>
             </div>
-            <ul v-else class="checks">
-              <li v-if="!selected.checks.length" class="ok">No issues found.</li>
-              <li v-for="c in selected.checks" :key="c.text"><span :class="['lvl', c.level]">{{ c.level }}</span>{{ c.text }}</li>
-            </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- STEPS -->
-    <section class="wrap steps">
-      <div class="step"><span class="n">1</span><div><h3>Run it</h3><p><code>npx mailnest</code> starts SMTP on 1025 and the inbox on 1080.</p></div></div>
-      <div class="step"><span class="n">2</span><div><h3>Point your app at it</h3><p>Set your SMTP host to <code>127.0.0.1</code> and port to <code>1025</code>. No TLS, no password.</p></div></div>
-      <div class="step"><span class="n">3</span><div><h3>Watch mail arrive</h3><p>Open <code>127.0.0.1:1080</code>. New messages appear live, no refresh.</p></div></div>
+    <!-- MARQUEE -->
+    <section class="marquee-wrap">
+      <p class="center small" v-reveal>Works with the stack you already have</p>
+      <div class="marquee" v-reveal="80">
+        <div class="track">
+          <span v-for="(s, i) in marquee" :key="i" :aria-hidden="i >= stacks.length">{{ s }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="wrap">
+      <header class="sec-head" v-reveal>
+        <p class="eyebrow">A simple loop</p>
+        <h2>Run it. Point at it. Watch.</h2>
+        <p class="sub">Three steps from a fresh terminal to seeing every email your app sends.</p>
+      </header>
+      <div class="steps">
+        <article class="card step" v-reveal="0">
+          <span class="num">01</span>
+          <div class="vis term"><span><span class="p">$</span>npx mailnest<span class="caret" /></span></div>
+          <h3>Start Mailnest</h3>
+          <p>One command. SMTP on port 1025, the inbox on 1080. Nothing to install first.</p>
+        </article>
+        <article class="card step" v-reveal="100">
+          <span class="num">02</span>
+          <div class="vis cfg"><div><div><span class="k">SMTP_HOST</span>=127.0.0.1</div><div><span class="k">SMTP_PORT</span>=1025</div><div class="dim"># no TLS, no password</div></div></div>
+          <h3>Point your app at it</h3>
+          <p>Any framework that speaks SMTP works. Laravel, Rails, Django, Node, Go and more.</p>
+        </article>
+        <article class="card step" v-reveal="200">
+          <span class="num">03</span>
+          <div class="vis notif"><div class="toast"><span class="dot" /><div><b>Verify your email</b><small>Acme · just now</small></div></div></div>
+          <h3>Watch mail arrive</h3>
+          <p>Messages show up live with no refresh, ready to preview, inspect and check.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="wrap">
+      <header class="sec-head" v-reveal>
+        <p class="eyebrow">Everything in one inbox</p>
+        <h2>Catch the problem before your users do.</h2>
+        <p class="sub">A small tool with no missing pieces. Hover a card to see it work.</p>
+      </header>
+      <div class="features">
+        <article class="card feat" v-reveal="0">
+          <div class="vis inbox-v">
+            <div class="mrow new"><b>Verify your email</b><small>now</small></div>
+            <div class="mrow"><b>Your receipt #1042</b><small>2m</small></div>
+            <div class="mrow"><b>Reset your password</b><small>6m</small></div>
+          </div>
+          <h3>Live inbox</h3>
+          <p>Server sent events push each message in as it lands. Search, unread state, j and k to move.</p>
+        </article>
+        <article class="card feat" v-reveal="80">
+          <div class="vis device-v"><div class="frame"><i /><i /><i class="s" /><i class="b" /></div></div>
+          <h3>Device preview</h3>
+          <p>Flip between mobile, tablet and desktop widths in a sandbox with scripts blocked.</p>
+        </article>
+        <article class="card feat" v-reveal="160">
+          <div class="vis links-v">
+            <div>
+              <div><span class="ok">200</span>acme.test/pricing</div>
+              <div><span class="ok">200</span>acme.test/docs</div>
+              <div><span class="bad">404</span>acme.test/old-promo</div>
+            </div>
+          </div>
+          <h3>Link checker</h3>
+          <p>Requests every link in a message and shows the status, so dead links never ship.</p>
+        </article>
+        <article class="card feat" v-reveal="0">
+          <div class="vis api-v">
+            <div>
+              <div><span class="m">GET</span> /api/messages/wait?to=ama@</div>
+              <div class="res"><span class="pulse" /> 200 OK · Verify your email</div>
+            </div>
+          </div>
+          <h3>REST API and webhooks</h3>
+          <p>List, search, wait for and delete messages over HTTP. A JSON POST for every capture.</p>
+        </article>
+        <article class="card feat" v-reveal="80">
+          <div class="vis release-v">
+            <div class="rel"><span class="node">Mailnest</span><span class="wire"><i /></span><span class="node">Gmail</span></div>
+          </div>
+          <h3>Release</h3>
+          <p>Forward a captured message through a real SMTP server to see it in Gmail or Outlook.</p>
+        </article>
+        <article class="card feat" v-reveal="160">
+          <div class="vis db-v"><div class="dbrow"><span class="disk"><i /><i /><i /></span><code>--db mail.db</code></div></div>
+          <h3>Keep it or bin it</h3>
+          <p>In memory by default. Add one flag to keep messages across restarts in SQLite.</p>
+        </article>
+      </div>
     </section>
 
     <!-- CHECKS -->
-    <section class="wrap split">
-      <div>
-        <p class="kicker">Email checks</p>
-        <h2>Find out what Outlook will break before a customer does.</h2>
-        <p>
-          Every captured message runs through a set of checks for the things that quietly fail in
-          real inboxes: relative image URLs, missing alt text, flex and grid layouts, linked stylesheets,
-          scripts, missing plain text parts, and HTML big enough for Gmail to clip.
-        </p>
-        <a class="more" :href="withBase('/guide/checks')">See every check →</a>
+    <section class="wrap">
+      <div class="panel split">
+        <div v-reveal>
+          <p class="eyebrow">Email checks</p>
+          <h2>Find out what Outlook will break. Before a customer does.</h2>
+          <p class="sub left">
+            Every message runs through checks for the things that quietly fail in real inboxes:
+            relative image URLs, missing alt text, flex and grid layouts, linked stylesheets, scripts,
+            missing plain text, and HTML big enough for Gmail to clip.
+          </p>
+          <a class="link" :href="withBase('/guide/checks')">See every check <span class="arr">→</span></a>
+        </div>
+        <div class="check-card">
+          <div class="cc-head" v-reveal="60"><span>Checks</span><span class="score"><b>1</b> error · <b>3</b> warnings</span></div>
+          <ul class="checks big">
+            <li v-reveal="120"><span class="lvl error">error</span>Image uses a relative URL. It will not load in a real inbox.</li>
+            <li v-reveal="200"><span class="lvl warn">warn</span>HTML is over 102KB. Gmail will clip the message.</li>
+            <li v-reveal="280"><span class="lvl warn">warn</span>No plain text alternative. Some spam filters expect one.</li>
+            <li v-reveal="360"><span class="lvl warn">warn</span>Linked stylesheet. Most clients ignore it, inline your CSS.</li>
+            <li v-reveal="440"><span class="lvl info">info</span>No unsubscribe link found. Required for marketing mail.</li>
+          </ul>
+        </div>
       </div>
-      <ul class="checks card">
-        <li><span class="lvl error">error</span>Image uses a relative URL. It will not load in a real inbox.</li>
-        <li><span class="lvl warn">warn</span>HTML is over 102KB. Gmail will clip the message.</li>
-        <li><span class="lvl warn">warn</span>No plain text alternative. Some clients and spam filters expect one.</li>
-        <li><span class="lvl warn">warn</span>Linked stylesheet. Most clients ignore it, inline your CSS.</li>
-        <li><span class="lvl info">info</span>No unsubscribe link found. Required for marketing mail.</li>
-      </ul>
     </section>
 
     <!-- TESTING -->
-    <section class="wrap split reverse">
-      <div>
-        <p class="kicker">End to end tests</p>
-        <h2>Assert on the email, not just the button click.</h2>
-        <p>
-          <code>waitForEmail</code> blocks until a matching message arrives, then hands you the parsed
-          email. Pull the code out of a verification mail or follow a reset link, in Playwright, Vitest,
-          Cypress tasks or plain <code>fetch</code>.
-        </p>
-        <a class="more" :href="withBase('/guide/testing')">Testing guide →</a>
-      </div>
-      <div class="code card">
-        <div class="code-head">signup.spec.ts</div>
+    <section class="wrap">
+      <div class="split">
+        <div class="code card" v-reveal>
+          <div class="code-head"><span class="dots"><i /><i /><i /></span>signup.spec.ts</div>
 <pre><code><span class="k">import</span> { test, expect } <span class="k">from</span> <span class="s">'@playwright/test'</span>
 <span class="k">import</span> { Mailnest } <span class="k">from</span> <span class="s">'mailnest/client'</span>
 
@@ -198,45 +286,40 @@ const stacks = ['Node.js', 'Laravel', 'Rails', 'Django', 'Phoenix', 'Spring', 'G
   <span class="k">const</span> email = <span class="k">await</span> mail.<span class="f">waitForEmail</span>({
     to: <span class="s">'ama@user.test'</span>, subject: <span class="s">'Verify'</span>,
   })
-  <span class="k">const</span> code = email.text.<span class="f">match</span>(<span class="s">/\d{6}/</span>)[<span class="num">0</span>]
-  <span class="f">expect</span>(code).<span class="f">toHaveLength</span>(<span class="num">6</span>)
+  <span class="f">expect</span>(email.text).<span class="f">toMatch</span>(<span class="s">/\d{6}/</span>)
 })</code></pre>
-      </div>
-    </section>
-
-    <!-- FEATURE GRID -->
-    <section class="wrap">
-      <p class="kicker center">Everything else</p>
-      <h2 class="center">Small tool, no missing pieces.</h2>
-      <div class="grid">
-        <div v-for="f in features" :key="f.title" class="feat">
-          <h3>{{ f.title }}</h3>
-          <p>{{ f.body }}</p>
+          <div class="run"><span class="pass">✓</span> new users get a code <small>412ms</small></div>
+        </div>
+        <div v-reveal="120">
+          <p class="eyebrow">End to end tests</p>
+          <h2>Assert on the email, not just the button click.</h2>
+          <p class="sub left">
+            <code>waitForEmail</code> blocks until a matching message arrives, then hands you the parsed
+            email. Pull the code from a verification mail or follow a reset link, in Playwright, Vitest,
+            Cypress or plain <code>fetch</code>.
+          </p>
+          <ol class="numbered">
+            <li><span>01</span>Clear the inbox before each test</li>
+            <li><span>02</span>Trigger the flow in your app</li>
+            <li><span>03</span>Wait for the email and read it</li>
+          </ol>
+          <a class="link" :href="withBase('/guide/testing')">Testing guide <span class="arr">→</span></a>
         </div>
       </div>
-    </section>
-
-    <!-- STACKS -->
-    <section class="wrap stacks">
-      <h2>Works with anything that speaks SMTP.</h2>
-      <div class="chips"><span v-for="s in stacks" :key="s">{{ s }}</span></div>
-      <a class="more" :href="withBase('/guide/connect-your-app')">Setup snippets for each →</a>
     </section>
 
     <!-- OPEN SOURCE -->
     <section class="wrap">
-      <div class="oss">
-        <div>
-          <h2>Free and open source.</h2>
-          <p>
-            Mailnest is MIT licensed and built in the open. Read the code, file an issue, or send a
-            pull request. Small focused changes are the easiest to review.
-          </p>
-        </div>
-        <div class="oss-links">
-          <a class="btn primary" :href="repo" target="_blank" rel="noopener">Star on GitHub</a>
-          <a class="btn" :href="withBase('/guide/contributing')">Contributing guide</a>
-          <a class="btn" :href="repo + '/issues'" target="_blank" rel="noopener">Report an issue</a>
+      <div class="oss" v-reveal>
+        <ShaderBg :intensity="0.8" />
+        <div class="oss-inner">
+          <p class="eyebrow light">Free and open source</p>
+          <h2>Built in the open. Yours to run, read and change.</h2>
+          <p class="sub">MIT licensed. Read the code, file an issue, or send a pull request. Small focused changes are the easiest to review.</p>
+          <div class="ctas center">
+            <a class="btn white" :href="repo" target="_blank" rel="noopener">Star on GitHub <span class="arr">→</span></a>
+            <a class="btn ghost" :href="withBase('/guide/contributing')">Contributing guide</a>
+          </div>
         </div>
       </div>
     </section>
@@ -244,152 +327,258 @@ const stacks = ['Node.js', 'Laravel', 'Rails', 'Django', 'Phoenix', 'Spring', 'G
 </template>
 
 <style scoped>
-.mn { --line: var(--vp-c-divider); --muted: var(--vp-c-text-2); --panel: var(--vp-c-bg-soft); padding-bottom: 96px; }
-.wrap { max-width: 1152px; margin-left: auto; margin-right: auto; padding: 0 24px; }
-.mn > section { margin-top: 112px; }
-h1, h2, h3 { letter-spacing: -0.02em; color: var(--vp-c-text-1); }
-h2 { font-size: clamp(26px, 3.4vw, 36px); line-height: 1.15; font-weight: 700; margin: 0 0 16px; max-width: 18ch; }
-h3 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
-p { color: var(--muted); line-height: 1.65; margin: 0; }
-code { font-family: var(--vp-font-family-mono); font-size: 0.88em; background: var(--vp-c-default-soft); padding: 2px 6px; border-radius: 6px; color: var(--vp-c-text-1); }
-.center { text-align: center; margin-left: auto; margin-right: auto; }
-.kicker { font-size: 13px; font-weight: 600; color: var(--vp-c-brand-1); margin-bottom: 10px; }
-.more { display: inline-block; margin-top: 20px; font-weight: 600; color: var(--vp-c-brand-1); text-decoration: none; }
-.more:hover { text-decoration: underline; }
-.card { border: 1px solid var(--line); border-radius: 14px; background: var(--vp-c-bg); }
+.mn {
+  --line: var(--vp-c-divider); --muted: var(--vp-c-text-2); --soft: var(--vp-c-bg-soft); --ink: var(--vp-c-text-1);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  padding-bottom: 120px;
+}
+.wrap { max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 32px; }
+.mn > section { margin-top: 140px; }
+h1, h2, h3 { color: var(--ink); }
+h2 { font-size: clamp(28px, 3.6vw, 44px); line-height: 1.08; font-weight: 500; letter-spacing: -0.035em; margin: 0 0 16px; }
+h3 { font-size: 19px; font-weight: 500; letter-spacing: -0.02em; margin: 0 0 6px; }
+p { color: var(--muted); line-height: 1.6; margin: 0; }
+code { font-family: var(--vp-font-family-mono); font-size: .86em; background: var(--vp-c-default-soft); padding: 2px 6px; border-radius: 6px; color: var(--ink); }
+.center { text-align: center; }
+.small { font-size: 13px; }
+.eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--vp-c-brand-1); margin-bottom: 14px; }
+.eyebrow.light { color: #c9c3ff; }
+.sec-head { text-align: center; max-width: 640px; margin: 0 auto 56px; }
+.sub { font-size: 16.5px; }
+.sub.left { margin-bottom: 24px; }
 
-/* hero */
-.mn > .hero { margin-top: 56px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 56px; align-items: center; }
-.eyebrow { max-width: 100%; display: inline-flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; }
-.eyebrow:hover { border-color: var(--vp-c-brand-2); color: var(--vp-c-text-1); }
-.pill { white-space: nowrap; background: var(--vp-c-brand-soft); color: var(--vp-c-brand-1); border-radius: 999px; padding: 2px 10px; font-weight: 600; }
-h1 { font-size: clamp(36px, 5.2vw, 56px); line-height: 1.05; font-weight: 800; margin: 22px 0 18px; }
+/* buttons and links */
+.btn { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; font-size: 15px; border-radius: 10px; padding: 12px 20px; text-decoration: none; transition: transform .25s var(--ease), box-shadow .25s var(--ease), background .2s; }
+.mn .btn.dark { background: #100e24; color: #fff; box-shadow: 0 8px 24px -10px rgba(10, 8, 40, .5); }
+.mn .btn.dark:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -12px rgba(60, 40, 200, .55); background: var(--vp-c-brand-3); color: #fff; }
+.btn.white { background: #fff; color: #0c0a24; }
+.btn.white:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -12px rgba(0, 0, 0, .6); }
+.btn.ghost { color: #fff; border: 1px solid rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .06); backdrop-filter: blur(6px); }
+.btn.ghost:hover { background: rgba(255, 255, 255, .14); }
+.link { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; color: var(--ink); text-decoration: none; }
+.link:hover { color: var(--vp-c-brand-1); }
+.arr { display: inline-block; transition: transform .25s var(--ease); }
+.btn:hover .arr, .link:hover .arr { transform: translateX(4px); }
+
+/* reveal */
+.rv { opacity: 0; transform: translateY(18px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+.rv.in { opacity: 1; transform: none; }
+
+/* HERO */
+.mn > .hero { margin-top: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); min-height: min(calc(100vh - var(--vp-nav-height)), 820px); border-bottom: 1px solid var(--line); }
+.hero-copy { align-self: center; padding: 64px 48px 64px max(32px, calc((100vw - 1200px) / 2 + 32px)); max-width: 680px; }
+h1 { font-size: clamp(42px, 5.6vw, 76px); line-height: 1; font-weight: 500; letter-spacing: -0.045em; margin: 0 0 24px; }
 .accent { color: var(--vp-c-brand-1); }
-.lede { font-size: 18px; max-width: 46ch; }
-.install { margin-top: 28px; display: flex; align-items: center; gap: 12px; max-width: 360px; border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 8px 8px 8px 16px; font-family: var(--vp-font-family-mono); }
-.install code { background: none; padding: 0; font-size: 15px; flex: 1; }
+.lede { font-size: 18.5px; max-width: 34em; color: var(--ink); opacity: .78; }
+.lede code { font-size: .82em; }
+.ctas { display: flex; align-items: center; gap: 28px; margin-top: 36px; flex-wrap: wrap; }
+.ctas.center { justify-content: center; gap: 12px; }
+.install { margin-top: 32px; display: inline-flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 8px 14px; font-family: var(--vp-font-family-mono); font-size: 14px; color: var(--ink); background: var(--vp-c-bg); transition: border-color .2s, box-shadow .25s var(--ease); cursor: pointer; }
+.install:hover { border-color: var(--vp-c-brand-2); box-shadow: 0 0 0 4px var(--vp-c-brand-soft); }
+.install code { background: none; padding: 0; font-size: inherit; }
 .prompt { color: var(--vp-c-brand-1); }
-.copy { font-size: 13px; font-weight: 600; border: 1px solid var(--line); border-radius: 8px; padding: 5px 12px; background: var(--vp-c-bg); color: var(--vp-c-text-1); }
-.copy:hover { border-color: var(--vp-c-brand-2); }
-.ctas { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
-.btn { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 18px; color: var(--vp-c-text-1); text-decoration: none; transition: border-color .15s, background .15s; }
-.btn:hover { border-color: var(--vp-c-brand-2); }
-.btn.primary { background: var(--vp-c-brand-3); border-color: var(--vp-c-brand-3); color: #fff; }
-.btn.primary:hover { background: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
-.req { font-size: 13px; margin-top: 16px; }
+.copy { font-family: var(--vp-font-family-base); font-size: 12px; font-weight: 600; border-radius: 6px; padding: 4px 10px; background: var(--soft); margin-left: 12px; }
+.fine { font-size: 13px; margin-top: 18px; }
 
-/* mock */
-.mock { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--vp-c-bg); box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 24px 60px -20px rgba(60, 40, 180, .28); font-size: 12.5px; }
-.chrome { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
-.dots { display: flex; gap: 6px; }
-.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--vp-c-default-3); }
-.url { font-family: var(--vp-font-family-mono); font-size: 11.5px; color: var(--muted); background: var(--vp-c-bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; }
-.app { display: grid; grid-template-columns: 210px 1fr; height: 380px; }
-.side { border-right: 1px solid var(--line); display: flex; flex-direction: column; position: relative; min-width: 0; }
-.side-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 12px 8px; font-size: 13px; }
-.live { color: var(--muted); font-size: 11px; display: flex; align-items: center; gap: 5px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.18); }
-.search { margin: 0 12px 8px; border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; color: var(--muted); font-size: 11.5px; }
+.hero-stage { position: relative; overflow: hidden; display: grid; place-items: center; padding: 72px 0 72px 56px; min-height: 560px; }
+.mock { position: relative; width: 100%; justify-self: end; border-radius: 14px 0 0 14px; background: var(--vp-c-bg); border: 1px solid rgba(255,255,255,.14); border-right: 0; box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .7); font-size: 12.5px; overflow: hidden; transition: transform .5s var(--ease); transform-origin: right center; will-change: transform; }
+.mock-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--ink); }
+.crumb { color: var(--muted); }
+.live { color: var(--muted); font-size: 11.5px; display: flex; align-items: center; gap: 7px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; animation: ping 2.4s infinite; }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(22,163,74,.45); } 70%, 100% { box-shadow: 0 0 0 7px rgba(22,163,74,0); } }
+.app { display: grid; grid-template-columns: 230px minmax(0, 1fr); height: 400px; }
+.side { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
+.search { margin: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--muted); font-size: 11.5px; }
 .list { list-style: none; margin: 0; padding: 0; overflow: hidden; }
-.list li { margin: 0; padding: 9px 12px; border-top: 1px solid var(--line); cursor: pointer; display: grid; gap: 1px; min-width: 0; }
-.list li:hover { background: var(--panel); }
+.list li { margin: 0; padding: 10px 14px; border-top: 1px solid var(--line); cursor: pointer; display: grid; gap: 2px; min-width: 0; transition: background .2s; }
+.list li:hover { background: var(--soft); }
 .list li.active { background: var(--vp-c-brand-soft); }
 .row { display: flex; justify-content: space-between; gap: 6px; }
-.from { font-weight: 600; color: var(--vp-c-text-1); }
+.from { font-weight: 600; color: var(--ink); }
 .time, .snip { color: var(--muted); font-size: 11px; }
 .subj, .snip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.subj { color: var(--vp-c-text-1); }
+.subj { color: var(--ink); }
 .list li.unread .subj, .list li.unread .from { font-weight: 700; }
 .list li.unread { box-shadow: inset 3px 0 0 var(--vp-c-brand-3); }
 .pane { display: flex; flex-direction: column; min-width: 0; }
-.msg-head { padding: 12px 16px; border-bottom: 1px solid var(--line); }
-.subject { font-size: 14.5px; font-weight: 700; color: var(--vp-c-text-1); }
+.msg-head { padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.subject { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
 .meta { color: var(--muted); font-size: 11.5px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.meta b { color: var(--vp-c-text-1); font-weight: 600; }
-.tabs { display: flex; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--line); }
-.tabs button { font-size: 12px; padding: 8px 10px; color: var(--muted); border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 5px; }
-.tabs button:disabled { cursor: default; opacity: .7; }
-.tabs button.on { color: var(--vp-c-text-1); border-bottom-color: var(--vp-c-brand-3); }
+.meta b { color: var(--ink); font-weight: 600; }
+.tabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.tabs button { font-size: 12px; padding: 9px 10px; color: var(--muted); border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 5px; transition: color .2s; }
+.tabs button:not(:disabled):hover { color: var(--ink); }
+.tabs button:disabled { cursor: default; opacity: .6; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--vp-c-brand-3); }
 .count { background: #f59e0b; color: #fff; border-radius: 999px; font-size: 10px; font-weight: 700; padding: 0 6px; }
-.preview { flex: 1; padding: 18px; background: repeating-conic-gradient(var(--vp-c-default-soft) 0 25%, transparent 0 50%) 50% / 16px 16px; overflow: hidden; }
-.email { background: #fff; color: #1f2328; border-radius: 8px; padding: 20px; max-width: 320px; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.preview { flex: 1; padding: 20px; background: var(--soft); overflow: hidden; }
+.email { background: #fff; color: #1f2328; border-radius: 10px; padding: 22px; max-width: 330px; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 12px 30px -16px rgba(30,20,90,.25); }
 .email-logo { font-weight: 800; color: #6d5efc; letter-spacing: -0.02em; font-size: 15px; }
-.email-h { font-size: 16px; font-weight: 700; margin: 14px 0 6px; }
+.email-h { font-size: 17px; font-weight: 600; margin: 14px 0 6px; letter-spacing: -.01em; }
 .email-p { color: #57606a; line-height: 1.5; }
-.email-btn { display: inline-block; background: #6d5efc; color: #fff; border-radius: 6px; padding: 7px 14px; margin-top: 14px; font-weight: 600; }
-.email-foot { color: #8c959f; font-size: 10.5px; margin-top: 18px; border-top: 1px solid #eaeef2; padding-top: 10px; }
+.email-btn { display: inline-block; background: #6d5efc; color: #fff; border-radius: 7px; padding: 8px 15px; margin-top: 16px; font-weight: 600; }
 
-/* checks list */
-.checks { list-style: none; margin: 0; padding: 4px 16px; }
-.checks li { display: flex; gap: 10px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--vp-c-text-1); line-height: 1.45; margin: 0; }
+/* checks */
+.checks { list-style: none; margin: 0; padding: 4px 18px; }
+.checks li { display: flex; gap: 10px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--ink); line-height: 1.45; margin: 0; }
 .checks li:last-child { border-bottom: 0; }
-.checks.card { padding: 8px 20px; font-size: 14px; }
 .checks .ok { color: #16a34a; }
-.lvl { flex: none; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-radius: 5px; padding: 2px 6px; }
+.lvl { flex: none; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; border-radius: 5px; padding: 2px 6px; }
 .lvl.error { background: rgba(220,38,38,.12); color: #dc2626; }
 .lvl.warn { background: rgba(217,119,6,.14); color: #c2680a; }
 .lvl.info { background: var(--vp-c-brand-soft); color: var(--vp-c-brand-1); }
 
+/* MARQUEE */
+.mn > .marquee-wrap { margin-top: 72px; }
+.marquee { margin-top: 22px; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.track { display: flex; gap: 56px; width: max-content; animation: marquee 38s linear infinite; }
+.marquee:hover .track { animation-play-state: paused; }
+.track span { font-size: 19px; font-weight: 500; letter-spacing: -.02em; color: var(--muted); opacity: .75; white-space: nowrap; transition: color .2s, opacity .2s; }
+.track span:hover { color: var(--vp-c-brand-1); opacity: 1; }
+@keyframes marquee { to { transform: translateX(calc(-50% - 28px)); } }
+
+/* cards */
+.card { border: 1px solid var(--line); border-radius: 16px; background: var(--vp-c-bg); padding: 14px 14px 26px; transition: opacity .8s var(--ease), transform .35s var(--ease), box-shadow .35s var(--ease), border-color .3s; }
+.card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--vp-c-brand-2) 40%, var(--line)); box-shadow: 0 24px 50px -28px rgba(50, 30, 160, .35); }
+.card h3, .card > p { padding: 0 10px; }
+.card > p { font-size: 14.5px; }
+.vis { height: 170px; border-radius: 10px; background: var(--soft); margin-bottom: 22px; position: relative; overflow: hidden; display: grid; place-items: center; font-size: 12.5px; }
+
 /* steps */
-.mn > .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 96px; max-width: 1104px; padding: 0; border: 1px solid var(--line); border-radius: 14px; }
-.step { display: flex; gap: 14px; padding: 24px; }
-.step + .step { border-left: 1px solid var(--line); }
-.n { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--vp-c-brand-soft); color: var(--vp-c-brand-1); font-weight: 700; font-size: 14px; }
-.step p { font-size: 14px; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.step { position: relative; }
+.num { position: absolute; top: 26px; left: 26px; z-index: 1; font-size: 11px; font-weight: 600; color: #fff; background: var(--vp-c-brand-3); border-radius: 6px; padding: 3px 7px; }
+.term { font-family: var(--vp-font-family-mono); font-size: 15px; color: var(--ink); }
+.term .p { color: var(--vp-c-brand-1); margin-right: 8px; }
+.caret { display: inline-block; width: 8px; height: 17px; background: var(--vp-c-brand-2); margin-left: 4px; vertical-align: -3px; animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.cfg { font-family: var(--vp-font-family-mono); font-size: 13px; color: var(--ink); line-height: 1.9; }
+.cfg .k { color: var(--vp-c-brand-1); }
+.cfg .dim { color: var(--muted); }
+.step:hover .cfg div div:not(.dim) { animation: nudge .5s var(--ease); }
+@keyframes nudge { 40% { transform: translateX(4px); } }
+.notif .toast { display: flex; gap: 10px; align-items: center; background: var(--vp-c-bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; box-shadow: 0 12px 28px -16px rgba(20,10,80,.4); transition: transform .45s var(--ease); }
+.notif .toast b { display: block; font-size: 13px; color: var(--ink); font-weight: 600; }
+.notif .toast small { color: var(--muted); font-size: 11.5px; }
+.step:hover .notif .toast { transform: translateY(-6px) scale(1.04); }
 
-/* split sections */
-.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 64px; align-items: center; }
-.split.reverse > :first-child { order: 2; }
-.code { overflow: hidden; }
-.code-head { font-size: 12px; color: var(--muted); padding: 10px 16px; border-bottom: 1px solid var(--line); font-family: var(--vp-font-family-mono); }
-.code pre { margin: 0; padding: 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
-.code pre code { background: none; padding: 0; font-size: inherit; color: var(--vp-c-text-1); }
-.k { color: #8250df; } .s { color: #0a7f4f; } .f { color: #0550ae; } .num { color: #b35900; }
-.dark .k { color: #c4a7ff; } .dark .s { color: #7ee2a8; } .dark .f { color: #8cc8ff; } .dark .num { color: #ffb86b; }
+/* features */
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.inbox-v { display: flex; flex-direction: column; align-items: stretch; gap: 8px; justify-content: center; padding: 0 28px; }
+.mrow { display: flex; justify-content: space-between; background: var(--vp-c-bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; color: var(--ink); transition: transform .4s var(--ease); }
+.mrow b { font-weight: 500; }
+.mrow small { color: var(--muted); }
+.mrow.new { border-color: var(--vp-c-brand-2); box-shadow: inset 3px 0 0 var(--vp-c-brand-3); }
+.feat:hover .mrow.new { animation: drop .7s var(--ease); }
+.feat:hover .mrow:not(.new) { transform: translateY(2px); }
+@keyframes drop { from { opacity: 0; transform: translateY(-14px); } }
+.device-v .frame { width: 34%; height: 120px; background: var(--vp-c-bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 7px; transition: width .7s var(--ease); }
+.device-v .frame i { display: block; height: 7px; border-radius: 4px; background: var(--vp-c-default-soft); }
+.device-v .frame i.s { width: 60%; }
+.device-v .frame i.b { width: 38%; height: 18px; background: var(--vp-c-brand-3); margin-top: auto; border-radius: 5px; }
+.feat:hover .device-v .frame { width: 82%; }
+.links-v { font-family: var(--vp-font-family-mono); font-size: 12px; color: var(--ink); }
+.links-v > div > div { display: flex; gap: 12px; padding: 5px 0; transition: transform .35s var(--ease); }
+.links-v span { font-weight: 700; border-radius: 4px; padding: 0 5px; }
+.links-v .ok { color: #16a34a; background: rgba(22,163,74,.12); }
+.links-v .bad { color: #dc2626; background: rgba(220,38,38,.12); }
+.feat:hover .links-v > div > div { transform: translateX(6px); }
+.feat:hover .links-v > div > div:nth-child(2) { transition-delay: .08s; }
+.feat:hover .links-v > div > div:nth-child(3) { transition-delay: .16s; }
+.api-v { font-family: var(--vp-font-family-mono); font-size: 12px; color: var(--ink); }
+.api-v .m { color: var(--vp-c-brand-1); font-weight: 700; }
+.api-v .res { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #16a34a; opacity: .35; transition: opacity .4s; }
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; }
+.feat:hover .api-v .res { opacity: 1; }
+.feat:hover .pulse { animation: ping 1.2s infinite; }
+.rel { display: flex; align-items: center; }
+.node { background: var(--vp-c-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-weight: 600; color: var(--ink); }
+.wire { position: relative; width: 80px; height: 2px; background: repeating-linear-gradient(90deg, var(--vp-c-divider) 0 6px, transparent 6px 11px); }
+.wire i { position: absolute; top: -4px; left: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--vp-c-brand-3); box-shadow: 0 0 12px var(--vp-c-brand-2); opacity: 0; }
+.feat:hover .wire i { animation: travel 1.1s var(--ease) infinite; }
+@keyframes travel { 0% { left: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: calc(100% - 10px); opacity: 0; } }
+.dbrow { display: flex; gap: 16px; align-items: center; }
+.disk { display: grid; gap: 4px; }
+.disk i { display: block; width: 46px; height: 13px; border-radius: 50%; border: 2px solid var(--vp-c-brand-2); background: var(--vp-c-bg); transition: transform .4s var(--ease); }
+.feat:hover .disk i:nth-child(1) { transform: translateY(-5px); }
+.feat:hover .disk i:nth-child(3) { transform: translateY(5px); }
 
-/* grid */
-.grid { margin-top: 40px; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.feat { padding: 28px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.feat p { font-size: 14px; }
+/* split panels */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 72px; align-items: center; }
+.panel { border: 1px solid var(--line); border-radius: 24px; padding: 64px; background: linear-gradient(180deg, var(--vp-c-bg) 0%, var(--soft) 100%); }
+.check-card { border: 1px solid var(--line); border-radius: 16px; background: var(--vp-c-bg); box-shadow: 0 30px 60px -36px rgba(40, 20, 140, .35); }
+.cc-head { display: flex; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink); font-weight: 600; }
+.score { font-weight: 400; color: var(--muted); }
+.score b { color: var(--ink); font-weight: 600; }
+.checks.big { padding: 6px 20px; font-size: 14px; }
+.checks.big li { transition: background .2s, padding .3s var(--ease), opacity .8s var(--ease), transform .8s var(--ease); border-radius: 8px; }
+.checks.big li:hover { background: var(--soft); padding-left: 8px; }
 
-/* stacks */
-.stacks { text-align: center; }
-.stacks h2 { margin: 0 auto 24px; max-width: none; }
-.chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.chips span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 16px; font-size: 14px; font-weight: 500; color: var(--vp-c-text-1); }
+/* code */
+.code { padding: 0; overflow: hidden; }
+.code-head { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid var(--line); font-family: var(--vp-font-family-mono); }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--vp-c-default-3); }
+.code pre { margin: 0; padding: 18px; overflow-x: auto; font-size: 13px; line-height: 1.65; }
+.code pre code { background: none; padding: 0; font-size: inherit; color: var(--ink); }
+.k { color: #8250df; } .s { color: #0a7f4f; } .f { color: #0550ae; }
+.dark .k { color: #c4a7ff; } .dark .s { color: #7ee2a8; } .dark .f { color: #8cc8ff; }
+.run { border-top: 1px solid var(--line); padding: 12px 18px; font-family: var(--vp-font-family-mono); font-size: 12.5px; color: var(--ink); background: var(--soft); }
+.run small { color: var(--muted); }
+.pass { color: #16a34a; font-weight: 700; margin-right: 6px; }
+.numbered { list-style: none; padding: 0; margin: 0 0 28px; border-top: 1px solid var(--line); }
+.numbered li { display: flex; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--ink); margin: 0; transition: padding .3s var(--ease), color .2s; }
+.numbered li:hover { padding-left: 8px; color: var(--vp-c-brand-1); }
+.numbered span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 3px; }
 
 /* oss */
-.oss { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: center; padding: 48px; border-radius: 18px; background: var(--vp-c-brand-soft); }
-.oss h2 { margin-bottom: 12px; }
-.oss-links { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
-.oss .btn:not(.primary) { background: var(--vp-c-bg); }
+.oss { position: relative; border-radius: 28px; overflow: hidden; min-height: 440px; display: grid; place-items: center; }
+.oss-inner { position: relative; text-align: center; max-width: 640px; padding: 72px 32px; pointer-events: none; }
+.oss-inner a { pointer-events: auto; }
+.oss h2 { color: #fff; }
+.oss .sub { color: rgba(255, 255, 255, .72); }
 
-/* motion */
-.slide-enter-active { transition: all .45s cubic-bezier(.2,.8,.2,1); }
-.slide-enter-from { opacity: 0; transform: translateY(-12px); background: var(--vp-c-brand-soft); }
-.slide-move { transition: transform .45s cubic-bezier(.2,.8,.2,1); }
-@keyframes pop { from { opacity: 0; transform: translateY(6px); } }
+/* transitions */
+.slide-enter-active { transition: all .5s var(--ease); }
+.slide-enter-from { opacity: 0; transform: translateY(-14px); }
+.slide-move { transition: transform .5s var(--ease); }
+.fade-enter-active, .fade-leave-active { transition: opacity .18s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
 @media (prefers-reduced-motion: reduce) {
-  .slide-enter-active, .slide-move { transition: none; animation: none; }
+  .track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; gap: 16px 32px; }
+  .track span[aria-hidden="true"] { display: none; }
+  .marquee { mask-image: none; }
+  .dot, .caret, .feat:hover * { animation: none !important; }
+  .mock, .card { transition: none; }
 }
 
 /* responsive */
-@media (max-width: 960px) {
-  .mn > .hero, .split, .oss { grid-template-columns: minmax(0, 1fr); gap: 40px; }
-  .split.reverse > :first-child { order: 0; }
-  .grid { grid-template-columns: repeat(2, 1fr); }
-  .oss-links { justify-content: flex-start; }
+@media (max-width: 1024px) {
+  .mn > .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .hero-copy { padding: 56px 32px 48px; max-width: none; }
+  .hero-stage { padding: 48px 0 48px 32px; min-height: 0; }
+  .split { grid-template-columns: minmax(0, 1fr); gap: 48px; }
+  .panel { padding: 40px; }
+  .features, .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .wrap { padding: 0 16px; }
-  .mn > section { margin-top: 80px; }
-  .mn > .hero { margin-top: 32px; }
-  .mn > .steps { grid-template-columns: 1fr; max-width: calc(100% - 32px); }
-  .step + .step { border-left: 0; border-top: 1px solid var(--line); }
-  .grid { grid-template-columns: 1fr; }
-  .app { grid-template-columns: 1fr; height: auto; }
+  .mn > section { margin-top: 96px; }
+  .mn > .hero { margin-top: 0; }
+  .mn > .marquee-wrap { margin-top: 56px; }
+  .hero-copy { padding: 40px 16px 36px; }
+  .hero-stage { padding: 32px 0 32px 16px; }
+  .app { grid-template-columns: minmax(0, 1fr); height: auto; }
   .side { display: none; }
-  .preview { min-height: 260px; }
-  .oss { padding: 28px; }
+  .preview { min-height: 240px; }
+  .features, .steps { grid-template-columns: minmax(0, 1fr); }
+  .panel { padding: 28px 20px; border-radius: 18px; }
+  .ctas { gap: 20px; }
+  .oss { border-radius: 20px; }
 }
+</style>
+<style>
+.dark .mn .btn.dark { background: #fff; color: #100e24; }
 </style>
