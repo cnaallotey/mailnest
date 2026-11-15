@@ -1,0 +1,62 @@
+{
+  "name": "mailnest",
+  "version": "0.1.0",
+  "description": "A modern, local email catcher for development. SMTP in, live inbox out.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "bin": {
+    "mailnest": "bin/mailnest.mjs"
+  },
+  "files": [
+    "bin",
+    "client",
+    ".output",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "start": "node bin/mailnest.mjs",
+    "test": "node --test test/*.test.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "nuxt": "^4.6.4",
+    "typescript": "^7.0.2",
+    "vue": "^3.5.45",
+    "vue-router": "^5.5.1"
+  },
+  "dependencies": {
+    "mailparser": "^3.14.3",
+    "nodemailer": "^10.5.0",
+    "smtp-server": "^3.21.4"
+  },
+  "exports": {
+    ".": "./bin/mailnest.mjs",
+    "./client": {
+      "types": "./client/index.d.ts",
+      "default": "./client/index.mjs"
+    }
+  },
+  "keywords": [
+    "email",
+    "smtp",
+    "mailcatcher",
+    "mailpit",
+    "development",
+    "testing",
+    "nuxt"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cnaallotey/mailnest.git"
+  },
+  "homepage": "https://github.com/cnaallotey/mailnest#readme",
+  "bugs": {
+    "url": "https://github.com/cnaallotey/mailnest/issues"
+  }
+}
