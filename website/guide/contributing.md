@@ -1,0 +1,48 @@
+# Contributing
+
+Mailnest is open source under the [MIT license](https://github.com/cnaallotey/mailnest/blob/main/LICENSE). Bug reports, ideas and pull requests are all welcome.
+
+## Ways to help
+
+- **Report a bug:** [open an issue](https://github.com/cnaallotey/mailnest/issues/new) with your Node version, the command you ran and what you expected.
+- **Suggest a check:** if an email broke in a client and Mailnest did not warn you, that is a good candidate for a new [check](./checks).
+- **Improve the docs:** every page has an "Edit this page on GitHub" link at the bottom.
+- **Send a pull request:** small, focused pull requests are the easiest to review. For larger features, open an issue first so we can agree on the approach.
+
+## Local setup
+
+```bash
+git clone https://github.com/cnaallotey/mailnest.git
+cd mailnest
+npm install
+npm run dev
+```
+
+`npm run dev` starts the UI on `http://localhost:3000` and SMTP on port `1025`.
+
+## Running the tests
+
+```bash
+npm run build && npm test
+```
+
+The tests are end to end smoke tests that run against the built app.
+
+## Project layout
+
+| Path | What lives there |
+| --- | --- |
+| `server/` | SMTP capture, storage and the REST API (Nitro) |
+| `server/utils/checks.ts` | The email checks and link extraction |
+| `app/` | The inbox UI (Nuxt and Vue) |
+| `bin/mailnest.mjs` | The CLI entry point |
+| `client/` | The `mailnest/client` test helper |
+| `website/` | This documentation site (VitePress) |
+
+## Working on the docs
+
+```bash
+cd website
+npm install
+npm run dev
+```

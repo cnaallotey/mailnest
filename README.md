@@ -2,6 +2,8 @@
 
 A modern, local email catcher for development. Point your app's SMTP at it, and every email shows up in a live inbox. A fresh take on MailCatcher, built on Nuxt and Node.
 
+**Docs:** https://cnaallotey.github.io/mailnest/
+
 ```bash
 npx mailnest
 ```
