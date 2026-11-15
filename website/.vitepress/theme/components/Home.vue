@@ -2,6 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref, type Directive } from 'vue'
 import { withBase } from 'vitepress'
 import ShaderBg from './ShaderBg.vue'
+import {
+  siNodedotjs, siLaravel, siRubyonrails, siDjango, siPhoenixframework, siSpringboot, siGo, siDotnet,
+  siDocker, siNestjs, siNextdotjs, siNuxt, siSymfony, siFastapi, siVitest, siJest, siCypress, siBun,
+} from 'simple-icons'
 
 const repo = 'https://github.com/cnaallotey/mailnest'
 
@@ -65,7 +69,15 @@ onMounted(() => {
 })
 onBeforeUnmount(() => clearTimeout(timer))
 
-const stacks = ['Node.js', 'Laravel', 'Rails', 'Django', 'Phoenix', 'Spring Boot', 'Go', '.NET', 'Docker', 'Nodemailer', 'Playwright', 'Vitest']
+// Brand marks from simple-icons (CC0). Very dark brand colours fall back to the text colour on hover
+// so they stay visible in dark mode.
+const icons = [siNodedotjs, siLaravel, siRubyonrails, siDjango, siPhoenixframework, siSpringboot, siGo, siDotnet,
+  siDocker, siNestjs, siNextdotjs, siNuxt, siSymfony, siFastapi, siVitest, siJest, siCypress, siBun]
+const lum = (hex: string) => {
+  const n = parseInt(hex, 16)
+  return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+}
+const stacks = icons.map(i => ({ title: i.title, path: i.path, color: lum(i.hex) < 0.25 ? 'var(--vp-c-text-1)' : `#${i.hex}` }))
 const marquee = [...stacks, ...stacks]
 </script>
 
@@ -149,7 +161,10 @@ const marquee = [...stacks, ...stacks]
       <p class="center small" v-reveal>Works with the stack you already have</p>
       <div class="marquee" v-reveal="80">
         <div class="track">
-          <span v-for="(s, i) in marquee" :key="i" :aria-hidden="i >= stacks.length">{{ s }}</span>
+          <span v-for="(s, i) in marquee" :key="i" class="logo" :title="s.title" :style="{ '--brand': s.color }"
+                :aria-hidden="i >= stacks.length">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="s.path" /></svg><span class="sr">{{ s.title }}</span>
+          </span>
         </div>
       </div>
     </section>
@@ -366,7 +381,8 @@ code { font-family: var(--vp-font-family-mono); font-size: .86em; background: va
 
 /* HERO */
 .mn > .hero { margin-top: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); min-height: min(calc(100vh - var(--vp-nav-height)), 820px); border-bottom: 1px solid var(--line); }
-.hero-copy { align-self: center; padding: 64px 48px 64px max(32px, calc((100vw - 1200px) / 2 + 32px)); max-width: 680px; }
+.hero-copy { align-self: center; min-width: 0; padding: 64px 48px 64px max(32px, calc((100vw - 1200px) / 2 + 32px)); }
+.hero-copy > * { max-width: 600px; }
 h1 { font-size: clamp(42px, 5.6vw, 76px); line-height: 1; font-weight: 500; letter-spacing: -0.045em; margin: 0 0 24px; }
 .accent { color: var(--vp-c-brand-1); }
 .lede { font-size: 18.5px; max-width: 34em; color: var(--ink); opacity: .78; }
@@ -432,11 +448,13 @@ h1 { font-size: clamp(42px, 5.6vw, 76px); line-height: 1; font-weight: 500; lett
 /* MARQUEE */
 .mn > .marquee-wrap { margin-top: 72px; }
 .marquee { margin-top: 22px; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
-.track { display: flex; gap: 56px; width: max-content; animation: marquee 38s linear infinite; }
+.track { display: flex; align-items: center; gap: 64px; padding: 8px 0; width: max-content; animation: marquee 42s linear infinite; }
 .marquee:hover .track { animation-play-state: paused; }
-.track span { font-size: 19px; font-weight: 500; letter-spacing: -.02em; color: var(--muted); opacity: .75; white-space: nowrap; transition: color .2s, opacity .2s; }
-.track span:hover { color: var(--vp-c-brand-1); opacity: 1; }
-@keyframes marquee { to { transform: translateX(calc(-50% - 28px)); } }
+.logo { display: inline-flex; padding: 6px; color: var(--muted); opacity: .55; transition: color .25s, opacity .25s, transform .35s var(--ease); }
+.logo svg { width: 36px; height: 36px; fill: currentColor; display: block; }
+.logo:hover { color: var(--brand); opacity: 1; transform: translateY(-3px) scale(1.12); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@keyframes marquee { to { transform: translateX(calc(-50% - 32px)); } }
 
 /* cards */
 .card { border: 1px solid var(--line); border-radius: 16px; background: var(--vp-c-bg); padding: 14px 14px 26px; transition: opacity .8s var(--ease), transform .35s var(--ease), box-shadow .35s var(--ease), border-color .3s; }
@@ -548,13 +566,18 @@ h1 { font-size: clamp(42px, 5.6vw, 76px); line-height: 1; font-weight: 500; lett
 
 @media (prefers-reduced-motion: reduce) {
   .track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; gap: 16px 32px; }
-  .track span[aria-hidden="true"] { display: none; }
+  .track .logo[aria-hidden="true"] { display: none; }
   .marquee { mask-image: none; }
   .dot, .caret, .feat:hover * { animation: none !important; }
   .mock, .card { transition: none; }
 }
 
 /* responsive */
+@media (min-width: 1440px) {
+  .mn > .hero { grid-template-columns: calc((100vw - 1200px) / 2 + 680px) minmax(0, 1fr); }
+  .hero-stage { padding-right: 56px; }
+  .mock { max-width: 980px; justify-self: start; border-radius: 14px; border-right: 1px solid rgba(255,255,255,.14); transform-origin: center; }
+}
 @media (max-width: 1024px) {
   .mn > .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .hero-copy { padding: 56px 32px 48px; max-width: none; }
@@ -581,4 +604,6 @@ h1 { font-size: clamp(42px, 5.6vw, 76px); line-height: 1; font-weight: 500; lett
 </style>
 <style>
 .dark .mn .btn.dark { background: #fff; color: #100e24; }
+.dark .mn .logo { opacity: .8; }
+.dark .mn .logo:hover { opacity: 1; }
 </style>
