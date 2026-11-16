@@ -4,6 +4,10 @@ All notable changes to Mailnest are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-16
+
+See which email clients will drop parts of a message, preview dark mode, and accept STARTTLS.
+
 ### Added
 
 - **Client support report:** a Clients tab and `GET /api/messages/:id/compat` list the HTML and CSS features a message uses that email clients do not support, using bundled [Can I email](https://www.caniemail.com) data (over 250 features). `scripts/update-caniemail.mjs` refreshes the data.
@@ -54,6 +58,7 @@ The first public release.
 - **Test client:** `mailnest/client` with `waitForEmail`, `list`, `get` and `clear`, with TypeScript types.
 - **CLI:** `npx mailnest` with flags for every option and matching environment variables.
 
-[Unreleased]: https://github.com/cnaallotey/mailnest/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/cnaallotey/mailnest/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/cnaallotey/mailnest/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/cnaallotey/mailnest/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/cnaallotey/mailnest/releases/tag/v0.1.0

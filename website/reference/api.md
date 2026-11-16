@@ -93,8 +93,8 @@ Responds `408` if nothing matches in time.
 | Route | Description |
 | --- | --- |
 | `GET /api/messages/:id/raw` | The original message as `message/rfc822`. Add `?download=1` to download it as `<id>.eml`. |
-| `GET /api/messages/:id/html` | The HTML body as served to the preview, with `cid:` images rewritten. Add `?scheme=dark` or `?scheme=invert` for the [dark mode preview](../guide/inbox#dark-mode-preview) (next release). |
-| `GET /api/messages/:id/compat` | The [client support](#client-support) report (next release). |
+| `GET /api/messages/:id/html` | The HTML body as served to the preview, with `cid:` images rewritten. Add `?scheme=dark` or `?scheme=invert` for the [dark mode preview](../guide/inbox#dark-mode-preview) (0.3.0+). |
+| `GET /api/messages/:id/compat` | The [client support](#client-support) report (0.3.0+). |
 | `GET /api/messages/:id/attachments/:idx` | Download one attachment by its `idx`. |
 | `GET /api/messages/:id/links` | Run the link checker. Returns `[{ url, status, ok, error? }]`. |
 | `POST /api/messages/:id/read` | Mark read. Send `{ "read": false }` to mark unread. |
@@ -103,7 +103,7 @@ Responds `408` if nothing matches in time.
 | `DELETE /api/messages` | Delete every message. |
 | `DELETE /api/messages?inbox=name` | Delete only the messages in one named inbox. |
 
-## Client support <Badge type="tip" text="next release" />
+## Client support <Badge type="tip" text="0.3.0+" />
 
 ```http
 GET /api/messages/:id/compat
@@ -188,10 +188,10 @@ GET /api/config
 ```
 
 ```json
-{ "smtpPort": 1025, "persistent": false, "relayEnabled": false, "tls": false, "maxMessages": 500, "version": "0.2.0" }
+{ "smtpPort": 1025, "persistent": false, "relayEnabled": false, "tls": false, "maxMessages": 500, "version": "0.3.0" }
 ```
 
-`tls` is added in the next release. When it is `true`, `GET /api/tls-cert` returns the certificate Mailnest uses for STARTTLS as a PEM file, and responds `404` otherwise.
+`tls` was added in 0.3.0. When it is `true`, `GET /api/tls-cert` returns the certificate Mailnest uses for STARTTLS as a PEM file, and responds `404` otherwise.
 
 ## Errors
 

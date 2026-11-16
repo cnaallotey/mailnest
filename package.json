@@ -1,6 +1,6 @@
 {
   "name": "mailnest",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A modern, local email catcher for development. SMTP in, live inbox out.",
   "license": "MIT",
   "type": "module",

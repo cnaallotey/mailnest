@@ -27,7 +27,7 @@ If your tests route mail into [named inboxes](./testing#parallel-tests), a filte
 | **Clients** | Which HTML and CSS in the email each mail client does not support. See [Client support](./checks#client-support). |
 | **Links** | Mailnest requests every link in the message and shows the HTTP status. |
 
-### Dark mode preview <Badge type="tip" text="next release" />
+### Dark mode preview <Badge type="tip" text="0.3.0+" />
 
 Next to the width buttons, the HTML tab has three colour modes:
 

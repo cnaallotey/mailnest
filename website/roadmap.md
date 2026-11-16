@@ -8,7 +8,7 @@ Have an opinion, or want to build one? [Open an issue](https://github.com/cnaall
 
 These were on this roadmap and are now built. See the [changelog](./changelog).
 
-In the next release:
+In 0.3.0:
 
 - **Client compatibility report.** [Guide](./guide/checks#client-support)
 - **Dark mode preview.** [Guide](./guide/inbox#dark-mode-preview)

@@ -26,7 +26,7 @@ Each check has a level:
 | `viewport` | info | There is no viewport meta tag, so mobile clients may scale the message down. |
 | `unsubscribe` | info | No unsubscribe link was found. Required for marketing mail, fine for transactional mail. |
 
-## Client support <Badge type="tip" text="next release" />
+## Client support <Badge type="tip" text="0.3.0+" />
 
 The **Clients** tab answers a different question from the checks above: of the HTML and CSS this email actually uses, what does each mail client not support?
 

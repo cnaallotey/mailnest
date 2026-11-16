@@ -104,7 +104,7 @@ The SMTP server binds to `0.0.0.0` by default, so it accepts these connections. 
 
 You can also run Mailnest itself as a container next to your app. See [Run with Docker](./docker).
 
-## Apps that require TLS <Badge type="tip" text="next release" />
+## Apps that require TLS <Badge type="tip" text="0.3.0+" />
 
 By default Mailnest speaks plain SMTP and does not offer STARTTLS. If your app or framework insists on an encrypted connection, start Mailnest with `--tls`:
 

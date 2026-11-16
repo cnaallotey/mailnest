@@ -19,9 +19,9 @@ Every option can also be set with an environment variable. A flag wins over the 
 | `--relay <url>` | `MAILNEST_RELAY_URL` | off | SMTP URL used by [Release](../guide/release), e.g. `smtp://user:pass@host:587`. |
 | `--user <name>` | `MAILNEST_SMTP_USER` | off | Require SMTP auth with this username. Use with `--pass`. |
 | `--pass <secret>` | `MAILNEST_SMTP_PASS` | off | Password for SMTP auth. |
-| `--tls` | `MAILNEST_TLS=1` | off | Offer STARTTLS with a self-signed certificate made at startup. See [Apps that require TLS](../guide/connect-your-app#apps-that-require-tls). Next release. |
-| `--tls-key <file>` | `MAILNEST_TLS_KEY` | | Private key (PEM) for STARTTLS. Use with `--tls-cert`. Next release. |
-| `--tls-cert <file>` | `MAILNEST_TLS_CERT` | | Certificate (PEM) for STARTTLS. Giving both files turns TLS on. Next release. |
+| `--tls` | `MAILNEST_TLS=1` | off | Offer STARTTLS with a self-signed certificate made at startup. See [Apps that require TLS](../guide/connect-your-app#apps-that-require-tls). Since 0.3.0. |
+| `--tls-key <file>` | `MAILNEST_TLS_KEY` | | Private key (PEM) for STARTTLS. Use with `--tls-cert`. Since 0.3.0. |
+| `--tls-cert <file>` | `MAILNEST_TLS_CERT` | | Certificate (PEM) for STARTTLS. Giving both files turns TLS on. Since 0.3.0. |
 | | `MAILNEST_MAX_SIZE_MB` | `25` | Largest message the SMTP server accepts, in megabytes. |
 | `--open` | | off | Open the inbox in your default browser on start. |
 | `-v`, `--version` | | | Print the version and exit. |
