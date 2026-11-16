@@ -59,7 +59,7 @@ npm install -g mailnest
 mailnest
 ```
 
-### Run it with Docker <Badge type="tip" text="next release" />
+### Run it with Docker <Badge type="tip" text="0.2.0+" />
 
 ```bash
 docker run --rm -p 127.0.0.1:1080:1080 -p 127.0.0.1:1025:1025 ghcr.io/cnaallotey/mailnest

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { exec } from 'node:child_process'
 
-const HELP = `mailnest ${'0.1.0'}  A modern local email catcher
+const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
+
+const HELP = `mailnest ${VERSION}  A modern local email catcher
 
 Usage: mailnest [options]
        mailnest check <files...>   Run the email checks on template files (see mailnest check --help)
@@ -18,6 +20,7 @@ Usage: mailnest [options]
   --max <n>           Keep at most n messages       (default 500)
   --user <name> --pass <secret>   Require SMTP auth
   --open              Open the UI in your browser
+  -v, --version       Print the version
   -h, --help          Show this help
 `
 
@@ -32,6 +35,7 @@ let open = false
 for (let i = 0; i < args.length; i++) {
   const a = args[i]
   if (a === '-h' || a === '--help') { console.log(HELP); process.exit(0) }
+  if (a === '-v' || a === '--version') { console.log(VERSION); process.exit(0) }
   if (a === '--open') { open = true; continue }
   const [flag, inline] = a.split('=')
   if (map[flag]) { env[map[flag]] = inline ?? args[++i]; continue }

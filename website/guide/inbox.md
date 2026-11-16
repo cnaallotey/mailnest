@@ -11,7 +11,7 @@ The inbox keeps a server sent events connection open. New messages appear the mo
 - Type in the search box to filter by subject, sender or body text.
 - Press <kbd>j</kbd> and <kbd>k</kbd> to move down and up the list.
 
-## Named inboxes <Badge type="tip" text="next release" />
+## Named inboxes <Badge type="tip" text="0.2.0+" />
 
 If your tests route mail into [named inboxes](./testing#parallel-tests), a filter appears under the search box. Pick an inbox to see only its mail. **Clear** then empties just that inbox. With "All inboxes" selected, each message shows a small tag with its inbox name.
 

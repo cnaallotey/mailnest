@@ -66,7 +66,7 @@ Returns the summary fields above plus `html`, `text`, `headers`, `attachments`, 
 }
 ```
 
-The `inbox`, `links` and `codes` fields and the `inbox` query parameter arrive in the next release. `links` holds every `http` and `https` link in the HTML and text parts. `codes` holds each run of 4 to 8 digits in the body, leaving out numbers inside URLs.
+The `inbox`, `links` and `codes` fields and the `inbox` query parameter were added in 0.2.0. `links` holds every `http` and `https` link in the HTML and text parts. `codes` holds each run of 4 to 8 digits in the body, leaving out numbers inside URLs.
 
 See [Email checks](../guide/checks) for every `rule`.
 
@@ -102,7 +102,7 @@ Responds `408` if nothing matches in time.
 | `DELETE /api/messages` | Delete every message. |
 | `DELETE /api/messages?inbox=name` | Delete only the messages in one named inbox. |
 
-## Inboxes <Badge type="tip" text="next release" />
+## Inboxes <Badge type="tip" text="0.2.0+" />
 
 ```http
 GET /api/inboxes
@@ -151,7 +151,7 @@ GET /api/config
 ```
 
 ```json
-{ "smtpPort": 1025, "persistent": false, "relayEnabled": false, "maxMessages": 500, "version": "0.1.0" }
+{ "smtpPort": 1025, "persistent": false, "relayEnabled": false, "maxMessages": 500, "version": "0.2.0" }
 ```
 
 ## Errors

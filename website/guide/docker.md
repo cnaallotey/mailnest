@@ -1,10 +1,8 @@
-# Run with Docker <Badge type="tip" text="next release" />
+# Run with Docker <Badge type="tip" text="0.2.0+" />
 
 Mailnest publishes an image to the GitHub Container Registry, so you can run it without installing Node.
 
-::: warning Published from the next release
-The image is built from version tags. It becomes available at `ghcr.io/cnaallotey/mailnest` with the first release after 0.1.0. Until then, build it yourself with `docker build -t mailnest .` from the repository.
-:::
+The image is available from version 0.2.0.
 
 ## Quick start
 

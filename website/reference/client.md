@@ -19,9 +19,9 @@ const mail = new Mailnest({ baseUrl: 'http://127.0.0.1:8025', inbox: 'worker-1' 
 | Option | Description |
 | --- | --- |
 | `baseUrl` | The web UI address. Defaults to `http://127.0.0.1:1080`. A trailing slash is ignored. |
-| `inbox` | Next release. Scope this client to a [named inbox](../guide/testing#parallel-tests). `list`, `waitForEmail` and `clear` then only touch that inbox. |
+| `inbox` | Scope this client to a [named inbox](../guide/testing#parallel-tests). `list`, `waitForEmail` and `clear` then only touch that inbox. |
 
-## `mail.inbox(name)` <Badge type="tip" text="next release" />
+## `mail.inbox(name)` <Badge type="tip" text="0.2.0+" />
 
 Returns a new client scoped to a named inbox, with the same base URL.
 
@@ -29,7 +29,7 @@ Returns a new client scoped to a named inbox, with the same base URL.
 const worker = mail.inbox('worker-1')
 ```
 
-## `mail.address(email)` <Badge type="tip" text="next release" />
+## `mail.address(email)` <Badge type="tip" text="0.2.0+" />
 
 Adds the client's inbox as a plus tag, so mail sent to the result is routed to it. Returns the address unchanged on an unscoped client.
 
@@ -60,7 +60,7 @@ email.links        // every http(s) link in the HTML and text parts
 email.codes        // numeric codes of 4 to 8 digits found in the body
 ```
 
-From the next release, `inbox`, `links` and `codes` are included, and messages returned by `waitForEmail` and `get` also have two helpers. Both take a string (contains) or a RegExp, and return the first match or `undefined`. With no argument they return the first item.
+Since 0.2.0, `inbox`, `links` and `codes` are included, and messages returned by `waitForEmail` and `get` also have two helpers. Both take a string (contains) or a RegExp, and return the first match or `undefined`. With no argument they return the first item.
 
 ```js
 email.link(/\/reset\//)  // 'https://app.test/reset/abc'

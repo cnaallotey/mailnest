@@ -16,7 +16,7 @@ The three methods you will use most:
 
 - `mail.clear()` deletes every message, so each test starts clean
 - `mail.waitForEmail({ to, subject, timeout })` resolves with the full message when a match arrives
-- `email.code()` and `email.link(/reset/)` pull a passcode or a link out of the message (next release)
+- `email.code()` and `email.link(/reset/)` pull a passcode or a link out of the message
 - `mail.list({ q })` searches what is already there
 
 See the [client reference](../reference/client) for every method and option.
@@ -61,7 +61,7 @@ test('welcome email has the user name', async () => {
 })
 ```
 
-## Codes and links <Badge type="tip" text="next release" />
+## Codes and links <Badge type="tip" text="0.2.0+" />
 
 Every message comes back with its links and numeric codes already found:
 
@@ -77,7 +77,7 @@ email.link('help')      // or containing a string
 
 A code is any run of 4 to 8 digits in the body. Numbers inside URLs are left out. If a message has other numbers of that length, such as a year, pass a pattern: `email.code(/^\d{6}$/)`.
 
-## Parallel tests <Badge type="tip" text="next release" />
+## Parallel tests <Badge type="tip" text="0.2.0+" />
 
 When tests run in parallel against one Mailnest, they share an inbox. One worker's `clear()` deletes another worker's mail, and two tests waiting for the same subject can pick up each other's message.
 

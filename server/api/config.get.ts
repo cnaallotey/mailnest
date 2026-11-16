@@ -1,9 +1,10 @@
 import { config } from '../utils/config'
+import pkg from '../../package.json'
 
 export default defineEventHandler(() => ({
   smtpPort: config.smtpPort,
   persistent: config.db !== ':memory:',
   relayEnabled: !!config.relayUrl,
   maxMessages: config.maxMessages,
-  version: '0.1.0',
+  version: pkg.version,
 }))

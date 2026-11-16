@@ -21,6 +21,7 @@ Every option can also be set with an environment variable. A flag wins over the 
 | `--pass <secret>` | `MAILNEST_SMTP_PASS` | off | Password for SMTP auth. |
 | | `MAILNEST_MAX_SIZE_MB` | `25` | Largest message the SMTP server accepts, in megabytes. |
 | `--open` | | off | Open the inbox in your default browser on start. |
+| `-v`, `--version` | | | Print the version and exit. |
 | `-h`, `--help` | | | Print help and exit. |
 
 ## Examples
@@ -49,7 +50,7 @@ Configure through the environment, handy in Docker or CI:
 MAILNEST_SMTP_PORT=2525 MAILNEST_DB=/data/mail.db npx mailnest
 ```
 
-## `mailnest check` <Badge type="tip" text="next release" />
+## `mailnest check` <Badge type="tip" text="0.2.0+" />
 
 ```bash
 npx mailnest check <files, folders or globs...> [--fail-on <level>] [--ignore <rules>] [--json]
@@ -63,7 +64,7 @@ Runs the email checks on `.html`, `.htm` and `.eml` files without starting the s
 | `1` | Problems found |
 | `2` | Bad usage, or no files matched |
 
-## Docker <Badge type="tip" text="next release" />
+## Docker <Badge type="tip" text="0.2.0+" />
 
 ```bash
 docker run --rm -p 127.0.0.1:1080:1080 -p 127.0.0.1:1025:1025 ghcr.io/cnaallotey/mailnest

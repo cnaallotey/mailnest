@@ -32,7 +32,7 @@ The **Links** tab goes one step further. It collects every `http` and `https` li
 
 These requests go out from your machine to the real URLs. See [Security](./security).
 
-## Check templates in CI <Badge type="tip" text="next release" />
+## Check templates in CI <Badge type="tip" text="0.2.0+" />
 
 `mailnest check` runs the same checks on template files, without starting the server. It exits with code 1 when it finds a problem, so a broken template fails the build.
 

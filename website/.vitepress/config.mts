@@ -21,7 +21,7 @@ export default defineConfig({
       { text: 'Reference', link: '/reference/cli', activeMatch: '/reference/' },
       { text: 'Roadmap', link: '/roadmap' },
       {
-        text: 'v0.1.0',
+        text: 'v0.2.0',
         items: [
           { text: 'Changelog', link: '/changelog' },
           { text: 'Roadmap', link: '/roadmap' },

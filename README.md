@@ -77,7 +77,7 @@ Runs the email checks on `.html` and `.eml` files without starting the server, a
 docker run --rm -p 127.0.0.1:1080:1080 -p 127.0.0.1:1025:1025 ghcr.io/cnaallotey/mailnest
 ```
 
-Add `--db /data/mail.db` and a volume at `/data` to keep messages. The image is published from version tags.
+Add `--db /data/mail.db` and a volume at `/data` to keep messages. Available from version 0.2.0.
 
 ## API
 

@@ -6,7 +6,7 @@ Have an opinion, or want to build one? [Open an issue](https://github.com/cnaall
 
 ## Recently shipped
 
-These were on this roadmap and are now built. They are in the next release. See the [changelog](./changelog).
+These were on this roadmap and shipped in 0.2.0. See the [changelog](./changelog).
 
 - **Separate inboxes for parallel tests.** [Guide](./guide/testing#parallel-tests)
 - **Official Docker image.** [Guide](./guide/docker)

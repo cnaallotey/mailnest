@@ -4,6 +4,10 @@ All notable changes to Mailnest are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-16
+
+Named inboxes for parallel tests, link and code helpers, a template linter for CI and a Docker image.
+
 ### Added
 
 - **Named inboxes for parallel tests.** Mail sent to a plus address such as `ama+worker-1@user.test`, or by a client that logs in with an SMTP username, is routed to a named inbox. Pass `inbox` to `GET /api/messages`, `GET /api/messages/wait` and `DELETE /api/messages` to list, wait on or clear only that inbox. `GET /api/inboxes` lists them, and the inbox UI gains a filter. Requests without `inbox` behave as before.
@@ -13,6 +17,7 @@ All notable changes to Mailnest are documented here. The format follows [Keep a 
 - **Docker image:** a `Dockerfile` with a health check, and a workflow that publishes `ghcr.io/cnaallotey/mailnest` for `linux/amd64` and `linux/arm64` on version tags.
 - Full TypeScript types for messages in `mailnest/client` (`Message`, `MessageSummary`).
 - Documentation website at [cnaallotey.github.io/mailnest](https://cnaallotey.github.io/mailnest/), with guides, an API reference, a roadmap and this changelog.
+- `mailnest --version`.
 - `homepage`, `bugs` and `repository` links in `package.json`, so the npm page points to the docs and GitHub.
 
 ### Changed
@@ -43,5 +48,6 @@ The first public release.
 - **Test client:** `mailnest/client` with `waitForEmail`, `list`, `get` and `clear`, with TypeScript types.
 - **CLI:** `npx mailnest` with flags for every option and matching environment variables.
 
-[Unreleased]: https://github.com/cnaallotey/mailnest/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/cnaallotey/mailnest/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/cnaallotey/mailnest/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/cnaallotey/mailnest/releases/tag/v0.1.0
