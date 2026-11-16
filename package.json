@@ -13,9 +13,11 @@
   "files": [
     "bin",
     "client",
+    "lib",
     ".output",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "dev": "nuxt dev",

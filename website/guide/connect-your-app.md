@@ -102,6 +102,8 @@ If your app runs in a container and Mailnest runs on your machine, `127.0.0.1` i
 
 The SMTP server binds to `0.0.0.0` by default, so it accepts these connections. The web UI stays on `127.0.0.1`.
 
+You can also run Mailnest itself as a container next to your app. See [Run with Docker](./docker).
+
 ## Changing the ports
 
 If 1025 or 1080 is taken:

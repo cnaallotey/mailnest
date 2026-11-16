@@ -16,6 +16,7 @@ The three methods you will use most:
 
 - `mail.clear()` deletes every message, so each test starts clean
 - `mail.waitForEmail({ to, subject, timeout })` resolves with the full message when a match arrives
+- `email.code()` and `email.link(/reset/)` pull a passcode or a link out of the message (next release)
 - `mail.list({ q })` searches what is already there
 
 See the [client reference](../reference/client) for every method and option.
@@ -36,9 +37,8 @@ test('password reset link works', async ({ page }) => {
   await page.click('text=Send reset link')
 
   const email = await mail.waitForEmail({ to: 'ama@user.test', subject: 'Reset your password' })
-  const link = email.html.match(/href="([^"]*\/reset\/[^"]+)"/)[1]
 
-  await page.goto(link)
+  await page.goto(email.link(/\/reset\//))
   await expect(page.getByRole('heading')).toHaveText('Choose a new password')
 })
 ```
@@ -60,6 +60,55 @@ test('welcome email has the user name', async () => {
   expect(email.text).toContain('Hi Ama')
 })
 ```
+
+## Codes and links <Badge type="tip" text="next release" />
+
+Every message comes back with its links and numeric codes already found:
+
+```js
+const email = await mail.waitForEmail({ to: 'ama@user.test', subject: 'Verify' })
+
+email.codes             // ['482913']
+email.code()            // '482913', the first code
+email.links             // ['https://app.test/verify?t=abc', 'https://app.test/help']
+email.link(/\/verify/)  // first link matching a RegExp
+email.link('help')      // or containing a string
+```
+
+A code is any run of 4 to 8 digits in the body. Numbers inside URLs are left out. If a message has other numbers of that length, such as a year, pass a pattern: `email.code(/^\d{6}$/)`.
+
+## Parallel tests <Badge type="tip" text="next release" />
+
+When tests run in parallel against one Mailnest, they share an inbox. One worker's `clear()` deletes another worker's mail, and two tests waiting for the same subject can pick up each other's message.
+
+Give each worker its own **named inbox**. A scoped client only lists, waits for and clears mail in its inbox:
+
+```ts
+import { test } from '@playwright/test'
+import { Mailnest } from 'mailnest/client'
+
+test('sign up sends a code', async ({ page }, testInfo) => {
+  const mail = new Mailnest({ inbox: `worker-${testInfo.parallelIndex}` })
+  await mail.clear() // only this worker's mail
+
+  const email = mail.address('ama@user.test') // 'ama+worker-0@user.test'
+  await page.goto('/signup')
+  await page.fill('#email', email)
+  await page.click('text=Create account')
+
+  const message = await mail.waitForEmail({ subject: 'Verify' })
+  await page.fill('#code', message.code())
+})
+```
+
+Mail is routed to a named inbox in two ways:
+
+1. **A plus tag on the recipient.** Mail to `ama+worker-0@user.test` goes to the `worker-0` inbox. `mail.address()` adds the tag for you. This is the one to use when all your test workers share one running app.
+2. **The SMTP username.** If your app logs in to Mailnest with a username, that name is the inbox. Useful when several apps share one Mailnest. It is ignored when Mailnest itself is started with `--user`.
+
+If a message has both, the plus tag wins. Inbox names are lower cased, and anything other than letters, digits, `.`, `-` and `_` becomes `-`.
+
+Nothing changes for an unscoped client: `new Mailnest()` still sees and clears every message. The inbox UI shows all mail too, with a filter that appears once named inboxes exist.
 
 ## How matching works
 

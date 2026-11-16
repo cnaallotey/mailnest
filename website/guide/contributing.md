@@ -33,9 +33,10 @@ The tests are end to end smoke tests that run against the built app.
 | Path | What lives there |
 | --- | --- |
 | `server/` | SMTP capture, storage and the REST API (Nitro) |
-| `server/utils/checks.ts` | The email checks and link extraction |
+| `lib/checks.mjs` | The email checks, plus link and code extraction, shared by the server and `mailnest check` |
 | `app/` | The inbox UI (Nuxt and Vue) |
-| `bin/mailnest.mjs` | The CLI entry point |
+| `bin/` | The CLI entry point and the `check` command |
+| `Dockerfile` | The published container image |
 | `client/` | The `mailnest/client` test helper |
 | `website/` | This documentation site (VitePress) |
 

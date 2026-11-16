@@ -20,7 +20,10 @@ Then send mail to `localhost:1025` and open http://127.0.0.1:1080.
 - Link checker that requests every link in the message
 - REST API, webhooks, and a `waitForEmail` helper for Playwright, Vitest and friends
 - Release: forward a captured message through a real SMTP server
+- Named inboxes, so parallel test workers never see or clear each other's mail
+- `mailnest check` lints template files in CI and fails the build on errors
 - Optional persistence in a SQLite file, optional SMTP auth, message retention limit
+- Docker image with a health check
 
 ## Options
 
@@ -46,18 +49,46 @@ const mail = new Mailnest('http://127.0.0.1:1080')
 await mail.clear()
 // trigger your app to send a signup email, then:
 const email = await mail.waitForEmail({ to: 'new@user.test', subject: 'Welcome', timeout: 8000 })
-const code = email.text.match(/\d{6}/)[0]
+const code = email.code()              // first 4 to 8 digit code in the body
+const link = email.link(/\/verify\//)  // first matching link
 ```
+
+### Parallel tests
+
+Give each test worker a named inbox. Mail to a plus address is routed to it, and `clear()` and `waitForEmail()` only touch that inbox.
+
+```js
+const mail = new Mailnest({ inbox: `worker-${workerIndex}` })
+await mail.clear()
+const address = mail.address('new@user.test') // new+worker-0@user.test
+```
+
+## Check templates in CI
+
+```bash
+npx mailnest check emails/ --fail-on warn
+```
+
+Runs the email checks on `.html` and `.eml` files without starting the server, and exits with code 1 when it finds problems. Use `--ignore rule1,rule2` to skip rules and `--json` for machine readable output.
+
+## Docker
+
+```bash
+docker run --rm -p 127.0.0.1:1080:1080 -p 127.0.0.1:1025:1025 ghcr.io/cnaallotey/mailnest
+```
+
+Add `--db /data/mail.db` and a volume at `/data` to keep messages. The image is published from version tags.
 
 ## API
 
 | Route | Description |
 | --- | --- |
-| `GET /api/messages?q=&to=&subject=` | List and search |
-| `GET /api/messages/:id` | Message with attachments and checks |
+| `GET /api/messages?q=&to=&subject=&inbox=` | List and search |
+| `GET /api/messages/:id` | Message with attachments, links, codes and checks |
 | `GET /api/messages/:id/raw` | Original .eml |
-| `GET /api/messages/wait?to=&subject=&timeout=` | Block until a match arrives |
-| `DELETE /api/messages` and `/api/messages/:id` | Clear or delete |
+| `GET /api/messages/wait?to=&subject=&inbox=&timeout=` | Block until a match arrives |
+| `GET /api/inboxes` | Named inboxes with message counts |
+| `DELETE /api/messages` and `/api/messages/:id` | Clear (all, or one inbox with `?inbox=`) or delete |
 | `GET /api/events` | Server sent events stream |
 | `POST /api/messages/:id/release` | Forward via relay, body `{ "to": ["a@b.c"] }` |
 | `GET/POST /api/webhooks`, `DELETE /api/webhooks/:id` | Manage webhooks |
@@ -70,4 +101,4 @@ Mailnest is a development tool. The web UI binds to localhost by default and has
 
 ## Development
 
-See CONTRIBUTING.md. MIT licensed.
+See CONTRIBUTING.md and CHANGELOG.md. MIT licensed.

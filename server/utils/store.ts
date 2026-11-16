@@ -14,6 +14,8 @@ export interface MessageSummary {
   read: boolean
   attachmentCount: number
   snippet: string
+  /** Named inbox this message was routed to, or '' for none. */
+  inbox: string
 }
 export interface MessageFull extends MessageSummary {
   html: string
@@ -22,6 +24,7 @@ export interface MessageFull extends MessageSummary {
 }
 export interface NewMessage {
   id: string
+  inbox: string
   createdAt: number
   from: Address | null
   to: Address[]
@@ -58,6 +61,10 @@ function open() {
     );
     CREATE TABLE IF NOT EXISTS webhooks (id TEXT PRIMARY KEY, url TEXT NOT NULL);
   `)
+  // Databases created before named inboxes existed need the column added.
+  const cols = db.prepare('PRAGMA table_info(messages)').all() as { name: string }[]
+  if (!cols.some(c => c.name === 'inbox')) db.exec(`ALTER TABLE messages ADD COLUMN inbox TEXT NOT NULL DEFAULT ''`)
+  db.exec('CREATE INDEX IF NOT EXISTS idx_messages_inbox ON messages(inbox)')
   return db
 }
 
@@ -78,19 +85,21 @@ function summary(r: any): MessageSummary {
     read: !!r.read,
     attachmentCount: r.attachment_count ?? 0,
     snippet: r.snippet || '',
+    inbox: r.inbox || '',
   }
 }
 
-const SUMMARY_COLS = `m.id, m.created_at, m.from_json, m.to_json, m.cc_json, m.envelope_to, m.subject, m.size, m.read, m.snippet,
+const SUMMARY_COLS = `m.id, m.created_at, m.from_json, m.to_json, m.cc_json, m.envelope_to, m.subject, m.size, m.read, m.snippet, m.inbox,
   (SELECT COUNT(*) FROM attachments a WHERE a.message_id = m.id) AS attachment_count`
 
 export function insertMessage(m: NewMessage) {
-  db.prepare(`INSERT INTO messages (id, created_at, from_json, to_json, cc_json, envelope_from, envelope_to, subject, html, text, headers_json, raw, size, snippet)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+  db.prepare(`INSERT INTO messages (id, created_at, from_json, to_json, cc_json, envelope_from, envelope_to, subject, html, text, headers_json, raw, size, snippet, inbox)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     m.id, m.createdAt, JSON.stringify(m.from), JSON.stringify(m.to), JSON.stringify(m.cc),
     m.envelopeFrom, JSON.stringify(m.envelopeTo), m.subject, m.html, m.text,
     JSON.stringify(m.headers), m.raw, m.raw.length,
     (m.text || m.html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim().slice(0, 140),
+    m.inbox,
   )
   const ins = db.prepare('INSERT INTO attachments VALUES (?,?,?,?,?,?,?)')
   m.attachments.forEach((a, i) => ins.run(m.id, i, a.filename, a.contentType, a.size, a.cid, a.content))
@@ -99,9 +108,10 @@ export function insertMessage(m: NewMessage) {
   db.exec('DELETE FROM attachments WHERE message_id NOT IN (SELECT id FROM messages)')
 }
 
-export function listMessages(opts: { q?: string; limit?: number; offset?: number; to?: string; subject?: string } = {}) {
+export function listMessages(opts: { q?: string; limit?: number; offset?: number; to?: string; subject?: string; inbox?: string } = {}) {
   const where: string[] = []
   const args: any[] = []
+  if (opts.inbox) { where.push('m.inbox = ?'); args.push(opts.inbox) }
   if (opts.q) {
     where.push('(m.subject LIKE ? OR m.text LIKE ? OR m.from_json LIKE ? OR m.to_json LIKE ?)')
     const like = `%${opts.q}%`
@@ -113,8 +123,15 @@ export function listMessages(opts: { q?: string; limit?: number; offset?: number
   const total = (db.prepare(`SELECT COUNT(*) c FROM messages m ${w}`).get(...args) as any).c as number
   const rows = db.prepare(`SELECT ${SUMMARY_COLS} FROM messages m ${w} ORDER BY m.created_at DESC LIMIT ? OFFSET ?`)
     .all(...args, opts.limit ?? 100, opts.offset ?? 0)
-  const unread = (db.prepare('SELECT COUNT(*) c FROM messages WHERE read = 0').get() as any).c as number
-  return { total, unread, messages: rows.map(summary) }
+  const unread = (opts.inbox
+    ? db.prepare('SELECT COUNT(*) c FROM messages WHERE read = 0 AND inbox = ?').get(opts.inbox)
+    : db.prepare('SELECT COUNT(*) c FROM messages WHERE read = 0').get()) as any
+  return { total, unread: unread.c as number, messages: rows.map(summary) }
+}
+
+export function listInboxes() {
+  return db.prepare(`SELECT inbox AS name, COUNT(*) AS total, COALESCE(SUM(read = 0), 0) AS unread
+    FROM messages WHERE inbox != '' GROUP BY inbox ORDER BY inbox`).all() as { name: string; total: number; unread: number }[]
 }
 
 export function getMessage(id: string): MessageFull | null {
@@ -134,7 +151,11 @@ export const deleteMessage = (id: string) => {
   db.prepare('DELETE FROM attachments WHERE message_id = ?').run(id)
   return Number(db.prepare('DELETE FROM messages WHERE id = ?').run(id).changes) > 0
 }
-export const clearMessages = () => { db.exec('DELETE FROM attachments; DELETE FROM messages;') }
+export const clearMessages = (inbox?: string) => {
+  if (!inbox) return void db.exec('DELETE FROM attachments; DELETE FROM messages;')
+  db.prepare('DELETE FROM attachments WHERE message_id IN (SELECT id FROM messages WHERE inbox = ?)').run(inbox)
+  db.prepare('DELETE FROM messages WHERE inbox = ?').run(inbox)
+}
 
 export function listAttachments(id: string) {
   return db.prepare('SELECT idx, filename, content_type AS contentType, size, cid FROM attachments WHERE message_id = ? ORDER BY idx').all(id) as

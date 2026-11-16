@@ -7,6 +7,7 @@ import { exec } from 'node:child_process'
 const HELP = `mailnest ${'0.1.0'}  A modern local email catcher
 
 Usage: mailnest [options]
+       mailnest check <files...>   Run the email checks on template files (see mailnest check --help)
 
   --smtp-port <n>     SMTP port to listen on        (default 1025)
   --http-port <n>     Web UI and API port           (default 1080)
@@ -21,6 +22,10 @@ Usage: mailnest [options]
 `
 
 const args = process.argv.slice(2)
+if (args[0] === 'check') {
+  const { runCheck } = await import('./check.mjs')
+  process.exit(await runCheck(args.slice(1)))
+}
 const env = process.env
 const map = { '--smtp-port': 'MAILNEST_SMTP_PORT', '--smtp-host': 'MAILNEST_SMTP_HOST', '--db': 'MAILNEST_DB', '--relay': 'MAILNEST_RELAY_URL', '--max': 'MAILNEST_MAX_MESSAGES', '--user': 'MAILNEST_SMTP_USER', '--pass': 'MAILNEST_SMTP_PASS', '--http-port': 'PORT', '--host': 'HOST' }
 let open = false

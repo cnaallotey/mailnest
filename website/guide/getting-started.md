@@ -59,6 +59,14 @@ npm install -g mailnest
 mailnest
 ```
 
+### Run it with Docker <Badge type="tip" text="next release" />
+
+```bash
+docker run --rm -p 127.0.0.1:1080:1080 -p 127.0.0.1:1025:1025 ghcr.io/cnaallotey/mailnest
+```
+
+See [Run with Docker](./docker) for compose files and persistence.
+
 ## Send a test email
 
 Point any SMTP client at host `127.0.0.1`, port `1025`, with no TLS and no password. A quick check with Node and Nodemailer:

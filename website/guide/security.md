@@ -8,6 +8,10 @@ Mailnest is a development tool. It is built to run on your own machine or inside
 - The UI binds to `127.0.0.1` by default. Only change `--host` (for example to `0.0.0.0`) on a network you trust.
 - The SMTP server binds to `0.0.0.0` so containers and other devices can send to it. Use `--smtp-host 127.0.0.1` to limit it to your machine, or `--user` and `--pass` to require SMTP auth.
 
+## Running in Docker
+
+Inside the container the web UI listens on every interface, because that is the only way to reach it from outside the container. Keep it private by publishing the port to your machine only: `-p 127.0.0.1:1080:1080`, not `-p 1080:1080`.
+
 ## Outbound requests
 
 Mailnest makes outbound network requests in three cases:

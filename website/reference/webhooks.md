@@ -19,6 +19,7 @@ curl -X POST http://127.0.0.1:1080/api/webhooks \
   "event": "message.received",
   "message": {
     "id": "a1b2c3d4e5f6",
+    "inbox": "",
     "createdAt": 1763190000000,
     "from": { "name": "Acme", "address": "hello@acme.test" },
     "to": [{ "name": "", "address": "ama@user.test" }],

@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'cache-control', 'no-cache, no-transform')
   const stream = createEventStream(event)
   const onMsg = (m: unknown) => stream.push({ event: 'message', data: JSON.stringify(m) })
-  const onClear = () => stream.push({ event: 'cleared', data: '{}' })
+  const onClear = (inbox?: string) => stream.push({ event: 'cleared', data: JSON.stringify(inbox ? { inbox } : {}) })
   bus.on('message', onMsg)
   bus.on('cleared', onClear)
   const ping = setInterval(() => stream.push({ event: 'ping', data: '{}' }), 15000)

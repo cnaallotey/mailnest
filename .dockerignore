@@ -1,0 +1,11 @@
+node_modules
+.nuxt
+.output
+.data
+.git
+.github
+website
+test
+*.db
+*.db-*
+.DS_Store

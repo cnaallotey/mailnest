@@ -69,3 +69,81 @@ test('sse pushes new messages and delete works', async () => {
   await fetch(`${base}/api/messages`, { method: 'DELETE' })
   assert.equal((await (await fetch(`${base}/api/messages`)).json()).total, 0)
 })
+
+test('named inboxes keep parallel tests apart', async () => {
+  const { Mailnest } = await import('../client/index.mjs')
+  const root = new Mailnest(base)
+  await root.clear()
+  const a = new Mailnest({ baseUrl: base, inbox: 'Worker 1' }), b = root.inbox('worker-2')
+  assert.equal(a.inboxName, 'worker-1')
+  assert.equal(a.address('ama@user.test'), 'ama+worker-1@user.test')
+
+  await send({ from: 'app@x.io', to: a.address('ama@user.test'), subject: 'Verify', text: 'Code 111111' })
+  await send({ from: 'app@x.io', to: b.address('ama@user.test'), subject: 'Verify', text: 'Code 222222' })
+  await send({ from: 'app@x.io', to: 'plain@user.test', subject: 'Verify', text: 'Code 333333' })
+
+  // Same recipient and subject, but each worker only sees its own message.
+  assert.equal((await a.waitForEmail({ to: 'ama', subject: 'Verify' })).code(), '111111')
+  assert.equal((await b.waitForEmail({ to: 'ama', subject: 'Verify' })).code(), '222222')
+  assert.equal((await a.list()).total, 1)
+  assert.equal((await root.list()).total, 3)
+  assert.deepEqual((await (await fetch(`${base}/api/inboxes`)).json()).map(i => i.name), ['worker-1', 'worker-2'])
+
+  // Clearing one inbox leaves the others alone.
+  await a.clear()
+  assert.equal((await a.list()).total, 0)
+  assert.equal((await b.list()).total, 1)
+  assert.equal((await root.list()).total, 2)
+
+  // The SMTP username also picks the inbox.
+  await nodemailer.createTransport({ host: '127.0.0.1', port: SMTP, secure: false, ignoreTLS: true, auth: { user: 'billing-app', pass: 'x' } })
+    .sendMail({ from: 'app@x.io', to: 'c@user.test', subject: 'Invoice', text: 'hi' })
+  assert.equal((await root.inbox('billing-app').waitForEmail({ subject: 'Invoice' })).inbox, 'billing-app')
+  await root.clear()
+})
+
+test('messages expose links and codes', async () => {
+  const { Mailnest } = await import('../client/index.mjs')
+  const mail = new Mailnest(base)
+  await mail.clear()
+  await send({
+    from: 'app@x.io', to: 'd@user.test', subject: 'Reset',
+    text: 'Your code is 482913. Order 77 shipped.\nReset: https://app.test/reset/abc?id=20261115',
+    html: '<p>Your code is <b>482913</b></p><a href="https://app.test/reset/abc?id=20261115&amp;x=1">Reset</a> <a href="https://app.test/help">Help</a>',
+  })
+  const email = await mail.waitForEmail({ subject: 'Reset' })
+  assert.deepEqual(email.codes, ['482913'])
+  assert.equal(email.code(), '482913')
+  assert.ok(email.links.includes('https://app.test/help'))
+  assert.equal(email.link(/\/reset\//), 'https://app.test/reset/abc?id=20261115&x=1')
+  assert.equal(email.link('help'), 'https://app.test/help')
+  assert.equal(email.link('nope'), undefined)
+  assert.ok(!('link' in JSON.parse(JSON.stringify(email))))
+  await mail.clear()
+})
+
+test('a message with no subject is flagged', async () => {
+  await send({ from: 'app@x.io', to: 'e@user.test', text: 'no subject here' })
+  const hit = await (await fetch(`${base}/api/messages/wait?to=e@user.test&timeout=4000`)).json()
+  const full = await (await fetch(`${base}/api/messages/${hit.id}`)).json()
+  assert.ok(full.checks.some(c => c.rule === 'subject'))
+  await fetch(`${base}/api/messages`, { method: 'DELETE' })
+})
+
+test('mailnest check lints template files', async () => {
+  const run = (...a) => new Promise((resolve) => {
+    const p = spawn('node', ['bin/mailnest.mjs', 'check', ...a], { stdio: 'pipe' })
+    let out = ''
+    p.stdout.on('data', d => (out += d)); p.stderr.on('data', d => (out += d))
+    p.on('close', code => resolve({ code, out }))
+  })
+  assert.equal((await run('test/fixtures/good.html', '--fail-on', 'info')).code, 0)
+  const bad = await run('test/fixtures/bad.html')
+  assert.equal(bad.code, 1)
+  assert.ok(bad.out.includes('img-relative') && !bad.out.includes('text-part'))
+  assert.equal((await run('test/fixtures/bad.html', '--ignore', 'img-relative')).code, 0)
+  assert.equal((await run('test/fixtures/bad.html', '--ignore', 'img-relative', '--fail-on', 'warn')).code, 1)
+  const json = JSON.parse((await run('test/fixtures', '--json', '--fail-on', 'never')).out)
+  assert.equal(json.files, 2); assert.equal(json.error, 1); assert.equal(json.ok, true)
+  assert.equal((await run('test/fixtures/missing.html')).code, 2)
+})

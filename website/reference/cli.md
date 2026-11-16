@@ -49,6 +49,28 @@ Configure through the environment, handy in Docker or CI:
 MAILNEST_SMTP_PORT=2525 MAILNEST_DB=/data/mail.db npx mailnest
 ```
 
+## `mailnest check` <Badge type="tip" text="next release" />
+
+```bash
+npx mailnest check <files, folders or globs...> [--fail-on <level>] [--ignore <rules>] [--json]
+```
+
+Runs the email checks on `.html`, `.htm` and `.eml` files without starting the server, and exits with code 1 when it finds a problem. See [Check templates in CI](../guide/checks#check-templates-in-ci).
+
+| Exit code | Meaning |
+| --- | --- |
+| `0` | No problems at or above the `--fail-on` level |
+| `1` | Problems found |
+| `2` | Bad usage, or no files matched |
+
+## Docker <Badge type="tip" text="next release" />
+
+```bash
+docker run --rm -p 127.0.0.1:1080:1080 -p 127.0.0.1:1025:1025 ghcr.io/cnaallotey/mailnest
+```
+
+See [Run with Docker](../guide/docker).
+
 ## Requirements
 
 Node.js 22.13 or newer.

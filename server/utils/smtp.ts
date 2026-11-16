@@ -4,6 +4,7 @@ import { simpleParser, type AddressObject } from 'mailparser'
 import { config } from './config'
 import { bus } from './bus'
 import { insertMessage, getSummary, listWebhooks, type Address } from './store'
+import { normalizeInbox } from './checks'
 
 const addrs = (a?: AddressObject | AddressObject[]): Address[] =>
   (Array.isArray(a) ? a : a ? [a] : []).flatMap(o => o.value.map(v => ({ name: v.name || '', address: v.address || '' })))
@@ -23,11 +24,24 @@ async function fireWebhooks(payload: unknown) {
   }
 }
 
-export async function ingest(raw: Buffer, envelope: { from?: string; to: string[] }) {
+// A message goes to a named inbox when a recipient uses a plus tag such as ama+worker-1@user.test, or
+// when the sender logged in with a username (unless Mailnest is locked to one account with --user).
+// The plus tag wins, because many apps send placeholder SMTP credentials in development.
+function pickInbox(envelope: { to: string[]; user?: string }) {
+  for (const to of envelope.to) {
+    const tag = /^[^+@]+\+([^@]+)@/.exec(to)?.[1]
+    if (tag) return normalizeInbox(tag)
+  }
+  if (envelope.user && !config.authUser) return normalizeInbox(envelope.user)
+  return ''
+}
+
+export async function ingest(raw: Buffer, envelope: { from?: string; to: string[]; user?: string }) {
   const p = await simpleParser(raw, { keepCidLinks: true })
   const id = randomBytes(6).toString('hex')
   insertMessage({
     id,
+    inbox: pickInbox(envelope),
     createdAt: Date.now(),
     from: addrs(p.from)[0] ?? (envelope.from ? { name: '', address: envelope.from } : null),
     to: addrs(p.to),
@@ -67,7 +81,7 @@ export function startSmtp() {
       if (config.authUser && (auth.username !== config.authUser || auth.password !== config.authPass)) {
         return cb(new Error('Invalid credentials'))
       }
-      cb(null, { user: auth.username || 'anonymous' })
+      cb(null, { user: auth.username || '' })
     },
     onData(stream, session, cb) {
       const chunks: Buffer[] = []
@@ -77,6 +91,7 @@ export function startSmtp() {
           await ingest(Buffer.concat(chunks), {
             from: session.envelope.mailFrom ? session.envelope.mailFrom.address : '',
             to: session.envelope.rcptTo.map(r => r.address),
+            user: typeof session.user === 'string' ? session.user : '',
           })
           cb()
         } catch (e) { cb(e as Error) }

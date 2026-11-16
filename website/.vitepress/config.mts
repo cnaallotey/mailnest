@@ -19,7 +19,16 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/getting-started', activeMatch: '/guide/' },
       { text: 'Reference', link: '/reference/cli', activeMatch: '/reference/' },
-      { text: 'Contribute', link: '/guide/contributing' },
+      { text: 'Roadmap', link: '/roadmap' },
+      {
+        text: 'v0.1.0',
+        items: [
+          { text: 'Changelog', link: '/changelog' },
+          { text: 'Roadmap', link: '/roadmap' },
+          { text: 'Contributing', link: '/guide/contributing' },
+          { text: 'Releases', link: `${repo}/releases` },
+        ],
+      },
     ],
     sidebar: [
       {
@@ -27,6 +36,7 @@ export default defineConfig({
         items: [
           { text: 'Getting started', link: '/guide/getting-started' },
           { text: 'Connect your app', link: '/guide/connect-your-app' },
+          { text: 'Run with Docker', link: '/guide/docker' },
           { text: 'The inbox', link: '/guide/inbox' },
           { text: 'Email checks', link: '/guide/checks' },
           { text: 'Testing with Mailnest', link: '/guide/testing' },
@@ -42,6 +52,13 @@ export default defineConfig({
           { text: 'REST API', link: '/reference/api' },
           { text: 'Webhooks', link: '/reference/webhooks' },
           { text: 'JavaScript client', link: '/reference/client' },
+        ],
+      },
+      {
+        text: 'Project',
+        items: [
+          { text: 'Roadmap', link: '/roadmap' },
+          { text: 'Changelog', link: '/changelog' },
         ],
       },
     ],

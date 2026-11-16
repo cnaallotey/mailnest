@@ -32,9 +32,47 @@ The **Links** tab goes one step further. It collects every `http` and `https` li
 
 These requests go out from your machine to the real URLs. See [Security](./security).
 
-## Using checks in CI
+## Check templates in CI <Badge type="tip" text="next release" />
 
-Since checks are part of the API response, you can fail a test when an email has errors:
+`mailnest check` runs the same checks on template files, without starting the server. It exits with code 1 when it finds a problem, so a broken template fails the build.
+
+```bash
+npx mailnest check emails/
+```
+
+```
+✓ emails/welcome.html
+
+emails/receipt.html
+  error  Image uses a relative URL. It will not load in a real inbox.  img-relative
+  warn   1 image(s) missing alt text.  img-alt
+
+2 files checked: 1 error, 1 warning, 0 info
+```
+
+Pass files, folders (searched for `.html`, `.htm` and `.eml`) or quoted globs such as `"emails/**/*.html"`.
+
+| Option | Description |
+| --- | --- |
+| `--fail-on <level>` | Fail on `error` (default), `warn` or `info` and anything worse. `never` always exits 0. |
+| `--ignore <rules>` | Comma separated rules to skip, for example `--ignore unsubscribe,viewport`. |
+| `--json` | Print the results as JSON for other tools. |
+
+An `.html` file is only the HTML part of a message, so the `subject`, `text-part` and `html` rules are skipped for it. An `.eml` file is a whole message and gets every rule.
+
+::: tip Templates with placeholders
+Check the rendered output where you can. A source template with placeholders, such as `src="{{ logo_url }}"`, will trip `img-relative`. Either render first or use `--ignore img-relative`.
+:::
+
+In GitHub Actions:
+
+```yaml
+- run: npx mailnest check emails/ --fail-on warn
+```
+
+## Check sent mail in tests
+
+Checks are also part of the API response, so you can fail a test when a real email has errors:
 
 ```js
 import { Mailnest } from 'mailnest/client'
