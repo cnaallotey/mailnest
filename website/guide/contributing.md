@@ -28,6 +28,16 @@ npm run build && npm test
 
 The tests are end to end smoke tests that run against the built app.
 
+## Updating the client support data
+
+The Clients tab uses a snapshot of the [Can I email](https://www.caniemail.com) dataset. To refresh it:
+
+```bash
+node scripts/update-caniemail.mjs
+```
+
+The script downloads the latest data, keeps the latest result per client, and writes `lib/caniemail.json`. It prints any features it has no detector for. Commit the changed file.
+
 ## Project layout
 
 | Path | What lives there |
@@ -35,6 +45,8 @@ The tests are end to end smoke tests that run against the built app.
 | `server/` | SMTP capture, storage and the REST API (Nitro) |
 | `lib/checks.mjs` | The email checks, plus link and code extraction, shared by the server and `mailnest check` |
 | `app/` | The inbox UI (Nuxt and Vue) |
+| `lib/compat.mjs`, `lib/caniemail.json` | The client support report and its bundled Can I email data |
+| `scripts/update-caniemail.mjs` | Refreshes `lib/caniemail.json` from caniemail.com |
 | `bin/` | The CLI entry point and the `check` command |
 | `Dockerfile` | The published container image |
 | `client/` | The `mailnest/client` test helper |

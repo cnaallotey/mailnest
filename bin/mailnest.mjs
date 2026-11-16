@@ -19,6 +19,8 @@ Usage: mailnest [options]
   --relay <url>       Enable Release via an SMTP URL, e.g. smtp://user:pass@host:587
   --max <n>           Keep at most n messages       (default 500)
   --user <name> --pass <secret>   Require SMTP auth
+  --tls               Offer STARTTLS with a self-signed certificate made at startup
+  --tls-key <file> --tls-cert <file>   Offer STARTTLS with your own certificate
   --open              Open the UI in your browser
   -v, --version       Print the version
   -h, --help          Show this help
@@ -30,13 +32,14 @@ if (args[0] === 'check') {
   process.exit(await runCheck(args.slice(1)))
 }
 const env = process.env
-const map = { '--smtp-port': 'MAILNEST_SMTP_PORT', '--smtp-host': 'MAILNEST_SMTP_HOST', '--db': 'MAILNEST_DB', '--relay': 'MAILNEST_RELAY_URL', '--max': 'MAILNEST_MAX_MESSAGES', '--user': 'MAILNEST_SMTP_USER', '--pass': 'MAILNEST_SMTP_PASS', '--http-port': 'PORT', '--host': 'HOST' }
+const map = { '--smtp-port': 'MAILNEST_SMTP_PORT', '--smtp-host': 'MAILNEST_SMTP_HOST', '--db': 'MAILNEST_DB', '--relay': 'MAILNEST_RELAY_URL', '--max': 'MAILNEST_MAX_MESSAGES', '--user': 'MAILNEST_SMTP_USER', '--pass': 'MAILNEST_SMTP_PASS', '--http-port': 'PORT', '--host': 'HOST', '--tls-key': 'MAILNEST_TLS_KEY', '--tls-cert': 'MAILNEST_TLS_CERT' }
 let open = false
 for (let i = 0; i < args.length; i++) {
   const a = args[i]
   if (a === '-h' || a === '--help') { console.log(HELP); process.exit(0) }
   if (a === '-v' || a === '--version') { console.log(VERSION); process.exit(0) }
   if (a === '--open') { open = true; continue }
+  if (a === '--tls') { env.MAILNEST_TLS = '1'; continue }
   const [flag, inline] = a.split('=')
   if (map[flag]) { env[map[flag]] = inline ?? args[++i]; continue }
   console.error(`Unknown option: ${a}\n`); console.error(HELP); process.exit(1)

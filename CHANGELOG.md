@@ -4,6 +4,12 @@ All notable changes to Mailnest are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- **Client support report:** a Clients tab and `GET /api/messages/:id/compat` list the HTML and CSS features a message uses that email clients do not support, using bundled [Can I email](https://www.caniemail.com) data (over 250 features). `scripts/update-caniemail.mjs` refreshes the data.
+- **Dark mode preview:** the HTML tab can show a message with its own `prefers-color-scheme: dark` styles applied, or with an approximation of the forced colour inversion some clients use. Also available as `?scheme=dark` and `?scheme=invert` on `GET /api/messages/:id/html`.
+- **STARTTLS:** `--tls` offers STARTTLS with a self-signed certificate made at startup, for apps that require an encrypted connection. `--tls-key` and `--tls-cert` use your own certificate. `GET /api/tls-cert` returns the certificate in use, and `/api/config` reports `tls`. Plain SMTP keeps working and remains the default.
+
 ## [0.2.0] - 2026-11-16
 
 Named inboxes for parallel tests, link and code helpers, a template linter for CI and a Docker image.

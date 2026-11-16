@@ -104,6 +104,29 @@ The SMTP server binds to `0.0.0.0` by default, so it accepts these connections. 
 
 You can also run Mailnest itself as a container next to your app. See [Run with Docker](./docker).
 
+## Apps that require TLS <Badge type="tip" text="next release" />
+
+By default Mailnest speaks plain SMTP and does not offer STARTTLS. If your app or framework insists on an encrypted connection, start Mailnest with `--tls`:
+
+```bash
+npx mailnest --tls
+```
+
+Mailnest then offers STARTTLS on the same port, using a self-signed certificate it creates at startup. Plain connections keep working, so nothing else has to change.
+
+Because the certificate is self-signed, your app has to be told to accept it. Pick one:
+
+- **Skip verification in development.** Most mail libraries have a setting for this, such as `tls: { rejectUnauthorized: false }` in Nodemailer or `'verify_peer' => false` on the SMTP mailer in Laravel's `config/mail.php`.
+- **Trust the certificate.** Download it from `http://127.0.0.1:1080/api/tls-cert` (or the Settings panel) and pass it to your client as a CA. It is valid for `localhost`, `127.0.0.1`, `::1` and `host.docker.internal`. A new one is made each time Mailnest starts.
+- **Bring your own.** For a certificate that stays the same between runs, create one with a tool such as [mkcert](https://github.com/FiloSottile/mkcert) and pass both files:
+
+  ```bash
+  mkcert localhost 127.0.0.1
+  npx mailnest --tls-key localhost+1-key.pem --tls-cert localhost+1.pem
+  ```
+
+Mailnest supports STARTTLS (the connection starts plain and upgrades). It does not support implicit TLS, where the connection is encrypted from the first byte, usually on port 465. In your app, choose "STARTTLS" or `secure: false`.
+
 ## Changing the ports
 
 If 1025 or 1080 is taken:

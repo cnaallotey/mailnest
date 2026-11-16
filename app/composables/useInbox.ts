@@ -27,7 +27,7 @@ export function useInbox() {
   const inbox = useState('inbox', () => '')
   const inboxes = useState<InboxInfo[]>('inboxes', () => [])
   const selectedId = useState<string | null>('sel', () => null)
-  const config = useState<{ smtpPort: number; persistent: boolean; relayEnabled: boolean; maxMessages: number; version: string } | null>('cfg', () => null)
+  const config = useState<{ smtpPort: number; persistent: boolean; relayEnabled: boolean; tls: boolean; maxMessages: number; version: string } | null>('cfg', () => null)
   let es: EventSource | null = null
 
   async function refresh() {

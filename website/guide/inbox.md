@@ -24,7 +24,20 @@ If your tests route mail into [named inboxes](./testing#parallel-tests), a filte
 | **Source** | The raw message exactly as it arrived over SMTP. |
 | **Headers** | Every header, parsed into a table. |
 | **Checks** | Problems that will hurt the email in real inboxes. See [Email checks](./checks). |
+| **Clients** | Which HTML and CSS in the email each mail client does not support. See [Client support](./checks#client-support). |
 | **Links** | Mailnest requests every link in the message and shows the HTTP status. |
+
+### Dark mode preview <Badge type="tip" text="next release" />
+
+Next to the width buttons, the HTML tab has three colour modes:
+
+| Mode | What it shows |
+| --- | --- |
+| **light** | The email as sent. |
+| **dark** | The email with its own `@media (prefers-color-scheme: dark)` styles applied, as Apple Mail and Outlook on macOS show it in dark mode. |
+| **inverted** | An approximation of clients that recolour every email themselves, such as Gmail on phones and Outlook on Windows. Images keep their colours. |
+
+If an email has no dark mode styles, **dark** looks the same as **light**, and Mailnest says so. That is what Apple Mail does too. **inverted** is a rough guide, because each client uses its own rules. Use it to spot problems such as a dark logo on a transparent background disappearing, then confirm in the real client with [Release](./release).
 
 ### HTML preview safety
 

@@ -16,6 +16,8 @@ Then send mail to `localhost:1025` and open http://127.0.0.1:1080.
 - HTML preview with mobile, tablet and desktop widths, sandboxed with scripts blocked
 - Text, raw source, and full header views, plus .eml download and attachment download
 - Inline images (cid) render correctly
+- Clients tab: which HTML and CSS each email client will drop, from Can I email data
+- Dark mode preview, with the email's own dark styles or an approximation of forced inversion
 - Checks tab: missing alt text, relative image URLs, scripts, flex/grid layouts, Gmail clipping, missing text part and more
 - Link checker that requests every link in the message
 - REST API, webhooks, and a `waitForEmail` helper for Playwright, Vitest and friends
@@ -36,6 +38,7 @@ Then send mail to `localhost:1025` and open http://127.0.0.1:1080.
 | `--relay <url>` | off | Enable Release, e.g. `smtp://user:pass@host:587` |
 | `--max <n>` | 500 | Messages to keep |
 | `--user`, `--pass` | off | Require SMTP auth |
+| `--tls` | off | Offer STARTTLS with a self-signed certificate (or `--tls-key` and `--tls-cert` for your own) |
 | `--open` | off | Open the browser |
 
 Every flag also has an environment variable, for example `MAILNEST_SMTP_PORT` and `MAILNEST_DB`. Requires Node 22.13 or newer.
@@ -86,6 +89,7 @@ Add `--db /data/mail.db` and a volume at `/data` to keep messages. Available fro
 | `GET /api/messages?q=&to=&subject=&inbox=` | List and search |
 | `GET /api/messages/:id` | Message with attachments, links, codes and checks |
 | `GET /api/messages/:id/raw` | Original .eml |
+| `GET /api/messages/:id/compat` | Client support report |
 | `GET /api/messages/wait?to=&subject=&inbox=&timeout=` | Block until a match arrives |
 | `GET /api/inboxes` | Named inboxes with message counts |
 | `DELETE /api/messages` and `/api/messages/:id` | Clear (all, or one inbox with `?inbox=`) or delete |

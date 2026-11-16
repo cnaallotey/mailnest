@@ -26,6 +26,24 @@ Each check has a level:
 | `viewport` | info | There is no viewport meta tag, so mobile clients may scale the message down. |
 | `unsubscribe` | info | No unsubscribe link was found. Required for marketing mail, fine for transactional mail. |
 
+## Client support <Badge type="tip" text="next release" />
+
+The **Clients** tab answers a different question from the checks above: of the HTML and CSS this email actually uses, what does each mail client not support?
+
+Mailnest scans the message for over 250 features, such as `display:flex`, `border-radius`, `@media`, `<video>` and WebP images, and looks each one up in the [Can I email](https://www.caniemail.com) support data. Each feature it finds is listed with a level:
+
+- **unsupported**: a major client (Gmail, Apple Mail, Outlook, Yahoo Mail or Samsung Email) does not support it
+- **partial**: a major client supports it with caveats
+- **minor**: only smaller clients are affected. These are hidden until you ask for them.
+
+Each row names the clients and platforms affected and links to the feature's page on Can I email. The summary at the top counts the problems per client, so you can see at a glance that, say, Outlook on Windows is where the trouble is.
+
+Not every unsupported feature is a bug. A `:hover` style or a dark mode media query that a client ignores does no harm. A layout built on `display:flex` that Outlook ignores does. Read the list as "what will be dropped", and decide which of those matter.
+
+The same report is available from the API at [`GET /api/messages/:id/compat`](../reference/api#client-support).
+
+The support data ships with Mailnest, so the report works offline. It is a snapshot of the Can I email dataset (MIT licensed), and the tab shows the date it was taken.
+
 ## Link checker
 
 The **Links** tab goes one step further. It collects every `http` and `https` link from the HTML and text parts (up to 50) and requests each one, six at a time, following redirects. Each link shows its final status code, or the error if the request failed.

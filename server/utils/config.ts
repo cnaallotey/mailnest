@@ -9,4 +9,8 @@ export const config = {
   maxSizeMb: num(process.env.MAILNEST_MAX_SIZE_MB, 25),
   authUser: process.env.MAILNEST_SMTP_USER || '',
   authPass: process.env.MAILNEST_SMTP_PASS || '',
+  // STARTTLS is offered when --tls is set, or when both a key and a certificate file are given.
+  tls: /^(1|true|yes|on)$/i.test(process.env.MAILNEST_TLS || '') || !!(process.env.MAILNEST_TLS_KEY && process.env.MAILNEST_TLS_CERT),
+  tlsKey: process.env.MAILNEST_TLS_KEY || '',
+  tlsCert: process.env.MAILNEST_TLS_CERT || '',
 }

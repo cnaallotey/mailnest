@@ -1,4 +1,6 @@
 import { randomBytes } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { selfSigned } from '../../lib/selfsigned.mjs'
 import { SMTPServer } from 'smtp-server'
 import { simpleParser, type AddressObject } from 'mailparser'
 import { config } from './config'
@@ -67,15 +69,26 @@ export async function ingest(raw: Buffer, envelope: { from?: string; to: string[
   return s
 }
 
-type G = typeof globalThis & { __mailnestSmtp?: SMTPServer }
+type G = typeof globalThis & { __mailnestSmtp?: SMTPServer; __mailnestTls?: { key: string; cert: string; generated: boolean } }
 const g = globalThis as G
+
+// The key and certificate used for STARTTLS, or null when TLS is off. With --tls alone, a self-signed
+// certificate is made in memory on each start. With --tls-key and --tls-cert, those files are used.
+export function tlsMaterial() {
+  if (!config.tls) return null
+  return (g.__mailnestTls ||= config.tlsKey && config.tlsCert
+    ? { key: readFileSync(config.tlsKey, 'utf8'), cert: readFileSync(config.tlsCert, 'utf8'), generated: false }
+    : { ...selfSigned({ hosts: ['localhost', 'host.docker.internal', '127.0.0.1', '::1'] }), generated: true })
+}
 
 export function startSmtp() {
   if (g.__mailnestSmtp) return g.__mailnestSmtp
+  const tls = tlsMaterial()
   const server = new SMTPServer({
     authOptional: true,
     allowInsecureAuth: true,
-    disabledCommands: ['STARTTLS'],
+    // Plain SMTP always works. STARTTLS is offered as an upgrade only when TLS is turned on.
+    ...(tls ? { key: tls.key, cert: tls.cert } : { disabledCommands: ['STARTTLS'] }),
     size: config.maxSizeMb * 1024 * 1024,
     onAuth(auth, _session, cb) {
       if (config.authUser && (auth.username !== config.authUser || auth.password !== config.authPass)) {
@@ -100,7 +113,7 @@ export function startSmtp() {
   })
   server.on('error', err => console.error('[mailnest] SMTP error:', err.message))
   server.listen(config.smtpPort, config.smtpHost, () => {
-    console.log(`[mailnest] SMTP listening on ${config.smtpHost}:${config.smtpPort}`)
+    console.log(`[mailnest] SMTP listening on ${config.smtpHost}:${config.smtpPort}${tls ? ` (STARTTLS on, ${tls.generated ? 'self-signed certificate' : 'your certificate'})` : ''}`)
   })
   g.__mailnestSmtp = server
   return server

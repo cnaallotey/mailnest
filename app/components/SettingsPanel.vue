@@ -21,6 +21,7 @@ async function del(id: string) { await $fetch(`/api/webhooks/${id}`, { method: '
       <table class="kv">
         <tbody>
           <tr><td>SMTP port</td><td>{{ config?.smtpPort }}</td></tr>
+          <tr><td>STARTTLS</td><td>{{ config?.tls ? 'On' : 'Off. Start with --tls' }} <a v-if="config?.tls" href="/api/tls-cert">Download certificate</a></td></tr>
           <tr><td>Storage</td><td>{{ config?.persistent ? 'Persistent (SQLite file)' : 'In memory, cleared on restart' }}</td></tr>
           <tr><td>Retention</td><td>Last {{ config?.maxMessages }} messages</td></tr>
           <tr><td>Relay</td><td>{{ config?.relayEnabled ? 'Configured' : 'Off. Set --relay smtp://user:pass@host:587' }}</td></tr>

@@ -147,3 +147,59 @@ test('mailnest check lints template files', async () => {
   assert.equal(json.files, 2); assert.equal(json.error, 1); assert.equal(json.ok, true)
   assert.equal((await run('test/fixtures/missing.html')).code, 2)
 })
+
+test('clients tab reports unsupported features', async () => {
+  await send({
+    from: 'app@x.io', to: 'f@user.test', subject: 'Layout',
+    html: '<html><head><style>.a{display:flex;gap:8px} @media (prefers-color-scheme: dark){.a{color:#fff}}</style></head><body><div class="a" style="max-width:600px">hi</div></body></html>',
+  })
+  const hit = await (await fetch(`${base}/api/messages/wait?to=f@user.test&timeout=4000`)).json()
+  const report = await (await fetch(`${base}/api/messages/${hit.id}/compat`)).json()
+  const flex = report.features.find(f => f.slug === 'css-display-flex')
+  assert.equal(flex.level, 'error')
+  assert.ok(flex.unsupported.some(c => c.family === 'outlook' && c.platforms.includes('Windows')))
+  assert.ok(report.features.some(f => f.slug === 'css-at-media-prefers-color-scheme'))
+  assert.ok(!report.features.some(f => f.slug === 'css-display-grid'))
+  assert.ok(report.clients.find(c => c.family === 'outlook').unsupported >= 2)
+  assert.match(report.updated, /^\d{4}-\d{2}-\d{2}$/)
+
+  // Dark mode preview: the dark media query is made to match, and inversion adds a filter.
+  const dark = await (await fetch(`${base}/api/messages/${hit.id}/html?scheme=dark`)).text()
+  assert.ok(!dark.includes('prefers-color-scheme') && dark.includes('@media (min-width: 0px)'))
+  assert.ok((await (await fetch(`${base}/api/messages/${hit.id}/html?scheme=invert`)).text()).includes('invert(1)'))
+  assert.ok((await (await fetch(`${base}/api/messages/${hit.id}/html`)).text()).includes('prefers-color-scheme: dark'))
+  await fetch(`${base}/api/messages`, { method: 'DELETE' })
+})
+
+test('STARTTLS is off by default and on with --tls', async () => {
+  const tlsOpts = { host: '127.0.0.1', secure: false, requireTLS: true, tls: { rejectUnauthorized: false } }
+  // The default server does not offer STARTTLS, so a client that requires it must fail.
+  await assert.rejects(nodemailer.createTransport({ ...tlsOpts, port: SMTP }).sendMail({ from: 'a@x.io', to: 'b@x.io', subject: 'tls', text: 'x' }))
+  assert.equal((await fetch(`${base}/api/tls-cert`)).status, 404)
+
+  const H = 18090, S = 11035, b = `http://127.0.0.1:${H}`
+  const p = spawn('node', ['bin/mailnest.mjs', '--tls', '--http-port', H, '--smtp-port', S], { stdio: 'pipe' })
+  try {
+    for (let i = 0; i < 50; i++) { try { await fetch(`${b}/api/config`); break } catch { await new Promise(r => setTimeout(r, 200)) } }
+    assert.equal((await (await fetch(`${b}/api/config`)).json()).tls, true)
+    // Encrypted, trusting the certificate Mailnest hands out.
+    const ca = await (await fetch(`${b}/api/tls-cert`)).text()
+    assert.ok(ca.includes('BEGIN CERTIFICATE'))
+    const info = await nodemailer.createTransport({ host: 'localhost', port: S, secure: false, requireTLS: true, tls: { ca } })
+      .sendMail({ from: 'a@x.io', to: 'b@x.io', subject: 'over tls', text: 'x' })
+    assert.ok(info.accepted.includes('b@x.io'))
+    // Plain SMTP still works on the same port.
+    await nodemailer.createTransport({ host: '127.0.0.1', port: S, secure: false, ignoreTLS: true }).sendMail({ from: 'a@x.io', to: 'c@x.io', subject: 'plain', text: 'x' })
+    assert.equal((await (await fetch(`${b}/api/messages`)).json()).total, 2)
+  } finally { p.kill() }
+})
+
+test('self-signed certificate is valid for localhost', async () => {
+  const { selfSigned } = await import('../lib/selfsigned.mjs')
+  const { X509Certificate } = await import('node:crypto')
+  const x = new X509Certificate(selfSigned().cert)
+  assert.ok(x.verify(x.publicKey))
+  assert.equal(x.checkHost('localhost'), 'localhost')
+  assert.equal(x.checkIP('127.0.0.1'), '127.0.0.1')
+  assert.equal(x.checkHost('example.com'), undefined)
+})

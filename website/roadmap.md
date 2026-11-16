@@ -6,7 +6,15 @@ Have an opinion, or want to build one? [Open an issue](https://github.com/cnaall
 
 ## Recently shipped
 
-These were on this roadmap and shipped in 0.2.0. See the [changelog](./changelog).
+These were on this roadmap and are now built. See the [changelog](./changelog).
+
+In the next release:
+
+- **Client compatibility report.** [Guide](./guide/checks#client-support)
+- **Dark mode preview.** [Guide](./guide/inbox#dark-mode-preview)
+- **STARTTLS support.** [Guide](./guide/connect-your-app#apps-that-require-tls)
+
+In 0.2.0:
 
 - **Separate inboxes for parallel tests.** [Guide](./guide/testing#parallel-tests)
 - **Official Docker image.** [Guide](./guide/docker)
@@ -14,26 +22,6 @@ These were on this roadmap and shipped in 0.2.0. See the [changelog](./changelog
 - **`mailnest check` for CI.** [Guide](./guide/checks#check-templates-in-ci)
 
 ## Now
-
-### STARTTLS support
-
-**Problem:** STARTTLS is turned off, so frameworks configured to require TLS cannot connect without a settings change in development.
-
-**Proposal:** an opt-in `--tls` flag that generates a self-signed certificate on first run and accepts STARTTLS.
-
-### Client compatibility report
-
-**Problem:** the checks catch common mistakes, but not which CSS each email client actually supports.
-
-**Proposal:** use the open [Can I email](https://www.caniemail.com/) dataset to list each CSS property and HTML element in the message, and the clients that do not support it, such as Outlook on Windows or Gmail on Android.
-
-### Dark mode preview
-
-**Problem:** many clients invert or recolour email in dark mode, and the result is only visible in a real inbox.
-
-**Proposal:** a toggle in the HTML tab that previews the message with `prefers-color-scheme: dark`, plus a simulated forced inversion like the one Outlook applies.
-
-## Next
 
 ### Simulate SMTP failures
 
@@ -51,7 +39,7 @@ npx mailnest --fail "to:*@bounce.test=550" --delay "subject:Digest=3000"
 
 **Proposal:** a Deliverability tab that flags common spam signals (a high image to text ratio, URL shorteners, a mismatched `From` and `Reply-To`, a missing `List-Unsubscribe` header) and shows the `Authentication-Results`, DKIM and SPF headers when they are present.
 
-## Later
+## Next
 
 - **Snapshot testing:** save a rendered screenshot of an email and fail a test when it changes visually.
 - **Import .eml files:** drag a `.eml` file into the inbox to inspect mail captured elsewhere.

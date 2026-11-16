@@ -5,4 +5,4 @@
 3. `npm run build && npm test` runs the end to end smoke tests against the built app.
 
 Small, focused pull requests are easiest to review. Open an issue first for larger features.
-Server code lives in `server/` (SMTP capture, storage, API). The UI is in `app/`. The email checks are in `lib/checks.mjs`, shared by the server and the `mailnest check` command in `bin/`. The docs site is in `website/`.
+Server code lives in `server/` (SMTP capture, storage, API). The UI is in `app/`. The email checks are in `lib/checks.mjs`, shared by the server and the `mailnest check` command in `bin/`. The client support data in `lib/caniemail.json` is refreshed with `node scripts/update-caniemail.mjs`. The docs site is in `website/`.

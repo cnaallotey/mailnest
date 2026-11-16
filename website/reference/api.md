@@ -93,7 +93,8 @@ Responds `408` if nothing matches in time.
 | Route | Description |
 | --- | --- |
 | `GET /api/messages/:id/raw` | The original message as `message/rfc822`. Add `?download=1` to download it as `<id>.eml`. |
-| `GET /api/messages/:id/html` | The HTML body as served to the preview, with `cid:` images rewritten. |
+| `GET /api/messages/:id/html` | The HTML body as served to the preview, with `cid:` images rewritten. Add `?scheme=dark` or `?scheme=invert` for the [dark mode preview](../guide/inbox#dark-mode-preview) (next release). |
+| `GET /api/messages/:id/compat` | The [client support](#client-support) report (next release). |
 | `GET /api/messages/:id/attachments/:idx` | Download one attachment by its `idx`. |
 | `GET /api/messages/:id/links` | Run the link checker. Returns `[{ url, status, ok, error? }]`. |
 | `POST /api/messages/:id/read` | Mark read. Send `{ "read": false }` to mark unread. |
@@ -101,6 +102,42 @@ Responds `408` if nothing matches in time.
 | `DELETE /api/messages/:id` | Delete one message. |
 | `DELETE /api/messages` | Delete every message. |
 | `DELETE /api/messages?inbox=name` | Delete only the messages in one named inbox. |
+
+## Client support <Badge type="tip" text="next release" />
+
+```http
+GET /api/messages/:id/compat
+```
+
+Lists the HTML and CSS features the message uses that at least one email client does not fully support. See [Client support](../guide/checks#client-support).
+
+```json
+{
+  "updated": "2026-09-16",
+  "counts": { "error": 2, "warn": 1, "info": 0 },
+  "clients": [{ "family": "outlook", "name": "Outlook", "major": true, "unsupported": 2, "partial": 1 }],
+  "features": [
+    {
+      "slug": "css-display-flex",
+      "title": "display:flex",
+      "category": "css",
+      "url": "https://www.caniemail.com/features/css-display-flex/",
+      "level": "error",
+      "unsupported": [{ "family": "outlook", "name": "Outlook", "major": true, "platforms": ["Windows", "Windows Mail"], "notes": [] }],
+      "partial": [{ "family": "gmail", "name": "Gmail", "major": true, "platforms": ["iOS", "Android"], "notes": ["Not supported with non Google accounts."] }]
+    }
+  ]
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `updated` | The date of the bundled Can I email data. |
+| `level` | `error` when a major client does not support the feature, `warn` when a major client supports it partly, `info` when only smaller clients are affected. |
+| `counts` | How many features are at each level. |
+| `clients` | Per client totals across every feature found. |
+
+Features are sorted with the most serious first. Major clients are Gmail, Apple Mail, Outlook, Yahoo Mail and Samsung Email.
 
 ## Inboxes <Badge type="tip" text="0.2.0+" />
 
@@ -151,8 +188,10 @@ GET /api/config
 ```
 
 ```json
-{ "smtpPort": 1025, "persistent": false, "relayEnabled": false, "maxMessages": 500, "version": "0.2.0" }
+{ "smtpPort": 1025, "persistent": false, "relayEnabled": false, "tls": false, "maxMessages": 500, "version": "0.2.0" }
 ```
+
+`tls` is added in the next release. When it is `true`, `GET /api/tls-cert` returns the certificate Mailnest uses for STARTTLS as a PEM file, and responds `404` otherwise.
 
 ## Errors
 

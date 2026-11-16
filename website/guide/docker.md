@@ -61,6 +61,8 @@ docker run --rm -p 127.0.0.1:1080:1080 -p 127.0.0.1:1025:1025 \
 
 Inside the container the UI listens on `0.0.0.0:1080` and SMTP on `0.0.0.0:1025`.
 
+To accept STARTTLS, add `--tls`. See [Apps that require TLS](./connect-your-app#apps-that-require-tls).
+
 ## Health check
 
 The image has a built in health check against `/api/config`, so compose can wait for it:
